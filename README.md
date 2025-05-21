@@ -74,13 +74,13 @@ ros2 topic echo /aruco_poses       # geometry_msgs/PoseArray
 
 ### ArUco 마커 인식 + YOLO 객체 탐지 (RViz)
 
-![Image](https://github.com/user-attachments/assets/6f51bd64-7e30-4744-ae99-ea40ca3be4e4)
+![Image](https://github.com/user-attachments/assets/21e76fc8-d993-4095-b92b-6d99304471ad)
 
 ---
 
 ### Gazebo 환경
 
-![Image](https://github.com/user-attachments/assets/9fda5a23-aa8b-4b72-8010-05097a585877)
+![Image](https://github.com/user-attachments/assets/65836d64-998b-4a2f-bf1a-d633871e58f5)
 
 ---
 
