@@ -26,7 +26,8 @@ sudo apt install python3-rosdep2 -y
 rosdep update
 rosdep install \
   --from-paths src --ignore-src -r -y \
-  --rosdistro humblecolcon build --symlink-install
+  --rosdistro humble
+colcon build --symlink-install
 source install/setup.bash
 ```
 
