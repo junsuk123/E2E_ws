@@ -22,6 +22,7 @@ e2e_ws/
 ```bash
 git clone https://github.com/junsuk123/e2e_ws.git
 cd e2e_ws
+sudo apt install python3-rosdep2 -y
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 source install/setup.bash
