@@ -1,2 +1,17 @@
+# ROS2 build artifacts
+build/
+install/
+log/
+
+# ROS2 bag files
 rosbag2_*/
 *.db3
+
+# Python virtual environment
+.venv/
+__pycache__/
+
+# 기타
+*.pyc
+*.swp
+*.DS_Store
