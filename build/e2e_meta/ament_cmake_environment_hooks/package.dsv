@@ -1,4 +1,0 @@
-source;share/e2e_meta/local_setup.bash
-source;share/e2e_meta/local_setup.dsv
-source;share/e2e_meta/local_setup.sh
-source;share/e2e_meta/local_setup.zsh

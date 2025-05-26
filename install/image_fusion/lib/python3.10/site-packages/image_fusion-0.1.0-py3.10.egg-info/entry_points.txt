@@ -1,3 +1,0 @@
-[console_scripts]
-image_fusion_node = image_fusion.image_fusion_node:main
-
