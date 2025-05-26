@@ -1,0 +1,39 @@
+[0.040s] Invoking command in '/home/j/e2e_ws/build/turtlebot3_simulations': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake /home/j/e2e_ws/src/turtlebot3_simulations-humble/turtlebot3_simulations -DCMAKE_INSTALL_PREFIX=/home/j/e2e_ws/install/turtlebot3_simulations
+[0.087s] -- The C compiler identification is GNU 11.4.0
+[0.137s] -- The CXX compiler identification is GNU 11.4.0
+[0.143s] -- Detecting C compiler ABI info
+[0.203s] -- Detecting C compiler ABI info - done
+[0.209s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.209s] -- Detecting C compile features
+[0.209s] -- Detecting C compile features - done
+[0.211s] -- Detecting CXX compiler ABI info
+[0.280s] -- Detecting CXX compiler ABI info - done
+[0.286s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.286s] -- Detecting CXX compile features
+[0.286s] -- Detecting CXX compile features - done
+[0.288s] -- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.411s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.529s] -- Configuring done
+[0.531s] -- Generating done
+[0.532s] -- Build files have been written to: /home/j/e2e_ws/build/turtlebot3_simulations
+[0.537s] Invoked command in '/home/j/e2e_ws/build/turtlebot3_simulations' returned '0': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake /home/j/e2e_ws/src/turtlebot3_simulations-humble/turtlebot3_simulations -DCMAKE_INSTALL_PREFIX=/home/j/e2e_ws/install/turtlebot3_simulations
+[0.537s] Invoking command in '/home/j/e2e_ws/build/turtlebot3_simulations': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake --build /home/j/e2e_ws/build/turtlebot3_simulations -- -j22 -l22
+[0.567s] Invoked command in '/home/j/e2e_ws/build/turtlebot3_simulations' returned '0': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake --build /home/j/e2e_ws/build/turtlebot3_simulations -- -j22 -l22
+[0.570s] Invoking command in '/home/j/e2e_ws/build/turtlebot3_simulations': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake --install /home/j/e2e_ws/build/turtlebot3_simulations
+[0.575s] -- Install configuration: ""
+[0.575s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/ament_index/resource_index/package_run_dependencies/turtlebot3_simulations
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/ament_index/resource_index/parent_prefix_path/turtlebot3_simulations
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/environment/ament_prefix_path.sh
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/environment/ament_prefix_path.dsv
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/environment/path.sh
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/environment/path.dsv
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/local_setup.bash
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/local_setup.sh
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/local_setup.zsh
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/local_setup.dsv
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/package.dsv
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/ament_index/resource_index/packages/turtlebot3_simulations
+[0.576s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/cmake/turtlebot3_simulationsConfig.cmake
+[0.577s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/cmake/turtlebot3_simulationsConfig-version.cmake
+[0.577s] -- Installing: /home/j/e2e_ws/install/turtlebot3_simulations/share/turtlebot3_simulations/package.xml
+[0.578s] Invoked command in '/home/j/e2e_ws/build/turtlebot3_simulations' returned '0': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot:/home/j/e2e_ws/install/yolo_ros:/home/j/e2e_ws/install/ros2_aruco:/opt/ros/humble /usr/bin/cmake --install /home/j/e2e_ws/build/turtlebot3_simulations

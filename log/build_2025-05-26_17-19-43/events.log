@@ -1,0 +1,14 @@
+[0.000000] (-) TimerEvent: {}
+[0.000474] (-) JobUnselected: {'identifier': 'e2e_meta'}
+[0.000526] (-) JobUnselected: {'identifier': 'ros2_aruco'}
+[0.000540] (-) JobUnselected: {'identifier': 'ros2_aruco_interfaces'}
+[0.000553] (-) JobUnselected: {'identifier': 'turtlebot3_fake_node'}
+[0.000565] (-) JobUnselected: {'identifier': 'turtlebot3_gazebo'}
+[0.000577] (-) JobUnselected: {'identifier': 'turtlebot3_simulations'}
+[0.000588] (-) JobUnselected: {'identifier': 'yolo_bringup'}
+[0.000600] (-) JobUnselected: {'identifier': 'yolo_msgs'}
+[0.000611] (-) JobUnselected: {'identifier': 'yolo_ros'}
+[0.000625] (image_fusion) JobQueued: {'identifier': 'image_fusion', 'dependencies': OrderedDict([('yolo_msgs', '/home/j/e2e_ws/install/yolo_msgs')])}
+[0.000643] (image_fusion) JobStarted: {'identifier': 'image_fusion'}
+[0.004190] (image_fusion) JobEnded: {'identifier': 'image_fusion', 'rc': 1}
+[0.014471] (-) EventReactorShutdown: {}

@@ -1,0 +1,39 @@
+[0.617s] Invoking command in '/home/j/e2e_ws/src/image_fusion': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot PYTHONPATH=/home/j/e2e_ws/build/image_fusion/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/image_fusion build --build-base /home/j/e2e_ws/build/image_fusion/build install --record /home/j/e2e_ws/build/image_fusion/install.log --single-version-externally-managed install_data
+[0.782s] running egg_info
+[0.782s] creating ../../build/image_fusion/image_fusion.egg-info
+[0.782s] writing ../../build/image_fusion/image_fusion.egg-info/PKG-INFO
+[0.782s] writing dependency_links to ../../build/image_fusion/image_fusion.egg-info/dependency_links.txt
+[0.782s] writing entry points to ../../build/image_fusion/image_fusion.egg-info/entry_points.txt
+[0.782s] writing requirements to ../../build/image_fusion/image_fusion.egg-info/requires.txt
+[0.782s] writing top-level names to ../../build/image_fusion/image_fusion.egg-info/top_level.txt
+[0.782s] writing manifest file '../../build/image_fusion/image_fusion.egg-info/SOURCES.txt'
+[0.783s] reading manifest file '../../build/image_fusion/image_fusion.egg-info/SOURCES.txt'
+[0.784s] writing manifest file '../../build/image_fusion/image_fusion.egg-info/SOURCES.txt'
+[0.784s] running build
+[0.784s] running build_py
+[0.784s] creating /home/j/e2e_ws/build/image_fusion/build
+[0.784s] creating /home/j/e2e_ws/build/image_fusion/build/lib
+[0.784s] creating /home/j/e2e_ws/build/image_fusion/build/lib/image_fusion
+[0.784s] copying image_fusion/image_fusion_node.py -> /home/j/e2e_ws/build/image_fusion/build/lib/image_fusion
+[0.784s] copying image_fusion/__init__.py -> /home/j/e2e_ws/build/image_fusion/build/lib/image_fusion
+[0.784s] running install
+[0.784s] running install_lib
+[0.785s] creating /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion
+[0.785s] copying /home/j/e2e_ws/build/image_fusion/build/lib/image_fusion/image_fusion_node.py -> /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion
+[0.785s] copying /home/j/e2e_ws/build/image_fusion/build/lib/image_fusion/__init__.py -> /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion
+[0.785s] byte-compiling /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion/image_fusion_node.py to image_fusion_node.cpython-310.pyc
+[0.786s] byte-compiling /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion/__init__.py to __init__.cpython-310.pyc
+[0.786s] running install_data
+[0.786s] creating /home/j/e2e_ws/install/image_fusion/share/ament_index
+[0.786s] creating /home/j/e2e_ws/install/image_fusion/share/ament_index/resource_index
+[0.786s] creating /home/j/e2e_ws/install/image_fusion/share/ament_index/resource_index/packages
+[0.787s] copying resource/image_fusion -> /home/j/e2e_ws/install/image_fusion/share/ament_index/resource_index/packages
+[0.787s] copying package.xml -> /home/j/e2e_ws/install/image_fusion/share/image_fusion
+[0.787s] creating /home/j/e2e_ws/install/image_fusion/share/image_fusion/launch
+[0.787s] copying launch/image_fusion_launch.py -> /home/j/e2e_ws/install/image_fusion/share/image_fusion/launch
+[0.787s] running install_egg_info
+[0.788s] Copying ../../build/image_fusion/image_fusion.egg-info to /home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages/image_fusion-0.1.0-py3.10.egg-info
+[0.788s] running install_scripts
+[0.803s] Installing image_fusion_node script to /home/j/e2e_ws/install/image_fusion/bin
+[0.803s] writing list of installed files to '/home/j/e2e_ws/build/image_fusion/install.log'
+[0.819s] Invoked command in '/home/j/e2e_ws/src/image_fusion' returned '0': CMAKE_PREFIX_PATH=/home/j/e2e_ws/install/yolo_msgs:/home/j/e2e_ws/install/image_fusion:/home/j/e2e_ws/install/yolo_bringup:/home/j/e2e_ws/install/image_fusion_node:/home/j/e2e_ws/install/turtlebot3_simulations:/home/j/e2e_ws/install/turtlebot3_gazebo:/home/j/e2e_ws/install/turtlebot3_fake_node:/home/j/e2e_ws/install/ros2_aruco_interfaces:/home/j/e2e_ws/install/e2e_meta:/home/j/e2e_ws/install/delbot PYTHONPATH=/home/j/e2e_ws/build/image_fusion/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/j/e2e_ws/install/image_fusion/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/image_fusion build --build-base /home/j/e2e_ws/build/image_fusion/build install --record /home/j/e2e_ws/build/image_fusion/install.log --single-version-externally-managed install_data

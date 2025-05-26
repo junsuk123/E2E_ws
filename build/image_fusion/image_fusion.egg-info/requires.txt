@@ -1,0 +1,4 @@
+cv_bridge
+numpy
+opencv-python
+setuptools

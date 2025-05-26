@@ -1,0 +1,8 @@
+source;share/e2e_meta/hook/cmake_prefix_path.ps1
+source;share/e2e_meta/hook/cmake_prefix_path.dsv
+source;share/e2e_meta/hook/cmake_prefix_path.sh
+source;share/e2e_meta/local_setup.bash
+source;share/e2e_meta/local_setup.dsv
+source;share/e2e_meta/local_setup.ps1
+source;share/e2e_meta/local_setup.sh
+source;share/e2e_meta/local_setup.zsh
