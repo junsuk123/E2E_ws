@@ -1,45 +1,101 @@
-import math
+#!/usr/bin/env python3
+import os
 import rclpy
 import torch
-import numpy as np
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
-from torchvision.transforms import Compose, Resize, ToTensor
+from torchvision.transforms import Compose, ToPILImage, Resize, ToTensor
 from torchvision.models import resnet18
+from ament_index_python.packages import get_package_share_directory
 
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('resnet_inference')
+
+        # CV bridge
         self.bridge = CvBridge()
-        model_path = self.declare_parameter('model_path', '/tmp/resnet.pth').value
+
+        # 1) 모델 파일 검색 (패키지 share/model)
+        share_dir = get_package_share_directory('resnet_control')
+        model_dir = os.path.join(share_dir, 'model')
+        # .pth 파일 리스트
+        candidates = sorted(f for f in os.listdir(model_dir) if f.endswith('.pth'))
+        if not candidates:
+            self.get_logger().error(f"No .pth model files in {model_dir}")
+            rclpy.shutdown()
+            return
+        default_model = os.path.join(model_dir, candidates[-1])
+
+        # 2) 모델 경로 파라미터 (수정 가능)
+        model_path = self.declare_parameter('model_path', default_model).get_parameter_value().string_value
+        if not os.path.isfile(model_path):
+            self.get_logger().error(f"Model not found: {model_path}")
+            rclpy.shutdown()
+            return
+
+        # 3) 장치 선택 & 모델 로드
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # model 로드
-        self.model = resnet18(pretrained=False, num_classes=2).to(self.device)
+        # 클래스 수를 실제 모델에 맞게 설정하세요 (예: 2)
+        num_classes = 2
+        self.model = resnet18(weights=None, num_classes=num_classes).to(self.device)
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         self.model.eval()
-        # transform
-        self.tf = Compose([Resize((240,320)), ToTensor()])
-        # subscribers & publisher
-        self.create_subscription(Image, 'fused_image', self.cb_image, 10)
-        self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.get_logger().info(f"Loaded model: {model_path}")
 
-    def cb_image(self, msg):
-        # 이미지 → 텐서
-        cv_img = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        # 4) Transform 정의
+        #    ToPILImage 으로 numpy.ndarray → PIL.Image 로 변환
+        self.tf = Compose([
+            ToPILImage(),            # numpy → PIL
+            Resize((240, 320)),      # height, width
+            ToTensor(),              # PIL → tensor, [0,1]
+        ])
+
+        # 5) 구독 (320×320 융합 이미지)
+        self.create_subscription(
+            Image,
+            '/fused_image',
+            self.cb_image,
+            10
+        )
+        # 6) 발행 (/cmd_vel)
+        self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
+
+    def cb_image(self, msg: Image):
+        # a) ROS Image → OpenCV (numpy.ndarray, BGR)
+        cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        # b) 전처리 & 배치 차원 추가
+        #    transforms.ToPILImage() 덕분에 바로 처리 가능
         x = self.tf(cv_img).unsqueeze(0).to(self.device)
+
+        # c) 추론
         with torch.no_grad():
             out = self.model(x).cpu().numpy()[0]
-        # Twist 생성
+
+        # d) Twist 메시지에 매핑
         t = Twist()
-        t.linear.x  = float(out[1])  # vel
-        t.angular.z = float(out[0])  # steer
+        # out[1] → 선속도, out[0] → 조향각
+        t.linear.x  = float(out[1])
+        t.angular.z = float(out[0])
+
+        # e) 퍼블리시
         self.pub.publish(t)
+        self.get_logger().debug(f"Published cmd_vel: linear.x={t.linear.x:.3f}, angular.z={t.angular.z:.3f}")
 
 def main(args=None):
     rclpy.init(args=args)
     node = InferenceNode()
-    rclpy.spin(node)
-    node.destroy_node()
+    # 모델 로드 실패 시 node 존재 여부로 체크
+    if hasattr(node, 'model'):
+        try:
+            rclpy.spin(node)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            node.destroy_node()
     rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

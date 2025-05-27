@@ -7,7 +7,5 @@ def generate_launch_description():
             package='data_collector',
             executable='collector_node',
             name='data_collector',
-            output='screen',
-            parameters=[{'out_dir': '/tmp/drive_data'}]
-        ),
+            output='screen',        ),
     ])

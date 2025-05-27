@@ -9,10 +9,10 @@ def generate_launch_description():
             name='resnet_train',
             output='screen',
             parameters=[
-              {'data_dir': '/tmp/drive_data'},
-              {'epochs': 20},
-              {'batch_size': 16},
-              {'learning_rate': 1e-4},
+                # data_dir, model_path 생략 시 기본값 사용
+                {'epochs': 45},
+                {'batch_size': 16},
+                {'learning_rate': 1e-4},
             ],
         ),
     ])
