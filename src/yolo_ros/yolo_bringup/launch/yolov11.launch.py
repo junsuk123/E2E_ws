@@ -37,11 +37,12 @@ def generate_launch_description():
                 launch_arguments={
                     "model": LaunchConfiguration("model", default="yolo11m.pt"),
                     "tracker": LaunchConfiguration("tracker", default="bytetrack.yaml"),
-                    "device": LaunchConfiguration("device", default="cuda:0"),
+                    # "device": LaunchConfiguration("device", default="cuda:0"),
+                    "device": LaunchConfiguration("device", default="cpu"),
                     "enable": LaunchConfiguration("enable", default="True"),
                     "threshold": LaunchConfiguration("threshold", default="0.5"),
                     "input_image_topic": LaunchConfiguration(
-                        "input_image_topic", default="/camera/rgb/image_raw"
+                        "input_image_topic", default="/camera/image_raw"
                     ),
                     "image_reliability": LaunchConfiguration(
                         "image_reliability", default="1"

@@ -10,9 +10,9 @@ def generate_launch_description():
             output='screen',
             parameters=[
                 # data_dir, model_path 생략 시 기본값 사용
-                {'epochs': 45},
-                {'batch_size': 16},
-                {'learning_rate': 1e-4},
+                {'epochs': 40},
+                {'batch_size': 8},
+                {'learning_rate': 1e-3},
             ],
         ),
     ])

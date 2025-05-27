@@ -27,6 +27,8 @@ setup(
         'console_scripts': [
             # collector_node 실행 시 data_collector/collector_node.py 의 main() 호출
             'collector_node = data_collector.collector_node:main',
+            'image_collector_node = data_collector.image_collector_node:main',
+
         ],
     },
 )
