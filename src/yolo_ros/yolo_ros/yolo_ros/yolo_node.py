@@ -15,6 +15,9 @@
 
 
 import cv2
+from sensor_msgs.msg import Image as SegImage
+import numpy as np
+
 from typing import List, Dict
 from cv_bridge import CvBridge
 
@@ -53,7 +56,7 @@ class YoloNode(LifecycleNode):
 
         # params
         self.declare_parameter("model_type", "YOLO")
-        self.declare_parameter("model", "yolov8m.pt")
+        self.declare_parameter("model", "yolov11n-seg.pt")
         self.declare_parameter("device", "cuda:0")
         self.declare_parameter("yolo_encoding", "bgr8")
         self.declare_parameter("enable", True)
@@ -120,6 +123,10 @@ class YoloNode(LifecycleNode):
         )
 
         self._pub = self.create_lifecycle_publisher(DetectionArray, "detections", 10)
+        # segmentation mask publisher
+        self._mask_pub = self.create_lifecycle_publisher(
+            SegImage, "segmentation_mask", 10
+        )
         self.cv_bridge = CvBridge()
 
         super().on_configure(state)
@@ -325,67 +332,92 @@ class YoloNode(LifecycleNode):
         return keypoints_list
 
     def image_cb(self, msg: Image) -> None:
+        if not self.enable:
+            return
 
-        if self.enable:
+        # 1) ROS Image → OpenCV BGR
+        cv_image = self.cv_bridge.imgmsg_to_cv2(
+            msg, desired_encoding=self.yolo_encoding
+        )
 
-            # convert image + predict
-            cv_image = self.cv_bridge.imgmsg_to_cv2(
-                msg, desired_encoding=self.yolo_encoding
-            )
-            results = self.yolo.predict(
-                source=cv_image,
-                verbose=False,
-                stream=False,
-                conf=self.threshold,
-                iou=self.iou,
-                imgsz=(self.imgsz_height, self.imgsz_width),
-                half=self.half,
-                max_det=self.max_det,
-                augment=self.augment,
-                agnostic_nms=self.agnostic_nms,
-                retina_masks=self.retina_masks,
-                device=self.device,
-            )
-            results: Results = results[0].cpu()
+        # 2) 모델 예측
+        results = self.yolo.predict(
+            source=cv_image,
+            verbose=False,
+            stream=False,
+            conf=self.threshold,
+            iou=self.iou,
+            imgsz=(self.imgsz_height, self.imgsz_width),
+            half=self.half,
+            max_det=self.max_det,
+            augment=self.augment,
+            agnostic_nms=self.agnostic_nms,
+            retina_masks=self.retina_masks,
+            device=self.device,
+        )[0].cpu()
 
-            if results.boxes or results.obb:
-                hypothesis = self.parse_hypothesis(results)
-                boxes = self.parse_boxes(results)
+        # 3) Bounding box 처리
+        hypothesis = None
+        boxes     = None
+        if results.boxes or results.obb:
+            hypothesis = self.parse_hypothesis(results)
+            boxes      = self.parse_boxes(results)
 
-            if results.masks:
-                masks = self.parse_masks(results)
+        # 4) Segmentation mask 처리 (전체 이미지용)
+        if results.masks:
+            # raw mask tensor -> numpy (N,H,W)
+            raw_masks  = results.masks.data.cpu().numpy()
+            bool_masks = raw_masks > 0.5
 
-            if results.keypoints:
-                keypoints = self.parse_keypoints(results)
+            # 합쳐진 바이너리 마스크 생성
+            _, H, W = bool_masks.shape
+            combined = np.zeros((H, W), dtype=bool)
+            for m in bool_masks:
+                combined |= m
+            mask_img = (combined.astype(np.uint8) * 255)
 
-            # create detection msgs
-            detections_msg = DetectionArray()
+            # 퍼블리시
+            im_msg = self.cv_bridge.cv2_to_imgmsg(mask_img, encoding="mono8")
+            im_msg.header = msg.header
+            self._mask_pub.publish(im_msg)
 
-            for i in range(len(results)):
+        # 5) DetectionArray 생성
+        detections_msg = DetectionArray()
+        detections_msg.header = msg.header
 
-                aux_msg = Detection()
+        # 6) Polygon 마스크 메시지 생성
+        mask_msgs = None
+        if results.masks:
+            mask_msgs = self.parse_masks(results)  # List[yolo_msgs.msg.Mask]
 
-                if results.boxes or results.obb and hypothesis and boxes:
-                    aux_msg.class_id = hypothesis[i]["class_id"]
-                    aux_msg.class_name = hypothesis[i]["class_name"]
-                    aux_msg.score = hypothesis[i]["score"]
+        # 7) Keypoints 처리
+        keypoints = None
+        if results.keypoints:
+            keypoints = self.parse_keypoints(results)
 
-                    aux_msg.bbox = boxes[i]
+        # 8) 각 Detection 메시지 채우기
+        for i in range(len(results)):
+            det = Detection()
 
-                if results.masks and masks:
-                    aux_msg.mask = masks[i]
+            # a) 바운딩 박스
+            if hypothesis and boxes:
+                det.class_id   = hypothesis[i]["class_id"]
+                det.class_name = hypothesis[i]["class_name"]
+                det.score      = hypothesis[i]["score"]
+                det.bbox       = boxes[i]
 
-                if results.keypoints and keypoints:
-                    aux_msg.keypoints = keypoints[i]
+            # b) 폴리곤 마스크
+            if mask_msgs is not None:
+                det.mask = mask_msgs[i]
 
-                detections_msg.detections.append(aux_msg)
+            # c) 키포인트
+            if keypoints is not None:
+                det.keypoints = keypoints[i]
 
-            # publish detections
-            detections_msg.header = msg.header
-            self._pub.publish(detections_msg)
+            detections_msg.detections.append(det)
 
-            del results
-            del cv_image
+        # 9) 퍼블리시
+        self._pub.publish(detections_msg)
 
     def set_classes_cb(
         self,
