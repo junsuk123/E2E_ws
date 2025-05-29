@@ -1,7 +1,8 @@
 # 🧠 AI Robot Programming Simulation - ROS2 Humble + Gazebo + YOLO + ResNet18 E2E
 
-ROS2 Humble 기반의 AI 로벏 시뮬레이션 프로젝트입니다.  
-Gazebo 환경에서 TurtleBot3가 YOLO를 활용하여 객체를 인식하고, ResNet18 기반 End-to-End 모델을 통해 자유 주회를 수행합니다.
+ROS2 Humble 
+Gazebo 환경에서 TurtleBot3가 YOLO를 활용하여 객체 인식.
+ ResNet18 기반 End-to-End 모델.
 
 ---
 
