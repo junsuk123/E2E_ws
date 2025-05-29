@@ -5,7 +5,8 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='data_collector',
-            executable='collector_node',
-            name='data_collector',
-            output='screen',        ),
+            executable='image_collector_node',
+            name='image_collector',
+            output='screen',
+        ),
     ])

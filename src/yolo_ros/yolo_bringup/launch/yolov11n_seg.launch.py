@@ -36,7 +36,7 @@ def generate_launch_description():
                     default=os.path.join(
                         get_package_share_directory("yolo_ros"),
                         "models",
-                        "yolov11n_seg_best.pt"
+                        "yolov11nseg_obstacleNroad.pt"
                     )
                 ),
                 "tracker": LaunchConfiguration("tracker", default="bytetrack.yaml"),
