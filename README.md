@@ -1,23 +1,23 @@
-# 🧠 AI Robot Programming Simulation - ROS2 Humble + Gazebo + YOLO + ArUco
+# 🧠 AI Robot Programming Simulation - ROS2 Humble + Gazebo + YOLO + ResNet18 E2E
 
-ROS2 Humble 기반의 AI 로봇 프로젝트 시뮬레이션 환경입니다.
-Gazebo 환경에서 TurtleBot3가 ArUco 마커와 YOLO 객체를 동시에 인식합니다.
+ROS2 Humble 기반의 AI 로벏 시뮬레이션 프로젝트입니다.  
+Gazebo 환경에서 TurtleBot3가 YOLO를 활용하여 객체를 인식하고, ResNet18 기반 End-to-End 모델을 통해 자유 주회를 수행합니다.
 
 ---
 
-## 📁 프로젝트 구조
+## 포맷코드 구조
 
-```
+```bash
 e2e_ws/
 ├── src/
-├── install/ (ignored)
-├── build/   (ignored)
+├── install/  (ignored)
+├── build/    (ignored)
 └── README.md
 ```
 
 ---
 
-## ⚙️ 설치 방법 (Ubuntu 22.04 + ROS2 Humble)
+## 설치 방법 (Ubuntu 22.04 + ROS2 Humble 기준)
 
 ```bash
 git clone https://github.com/junsuk123/e2e_ws.git
@@ -33,98 +33,104 @@ source install/setup.bash
 
 ---
 
-## 🚀 시뮬레이션 실행 방법
+## 시작 방법
 
-### 🐢 1. TurtleBot3 + Gazebo 실행
+### 🐢 1. TurtleBot3 + Gazebo 환경 실행
 
 ```bash
 ros2 launch turtlebot3_gazebo turtlebot3_AICenter.launch.py
 ```
 
-> Gazebo가 실행되면, `Insert` 탭을 눌러 적절한 물체(예: 소화전, 공 등 YOLO 학습된 객체)를 삽입하세요.
+**설명**: Gazebo 시뮬레이터에서 TurtleBot3가 등장하며, `Insert` 탭을 톸더 적절한 객체(hydrant, ball 등 YOLO 학습된 대상)를 추가하세요.
 
-### 🔍 2. YOLOv8 객체 인식 노드 실행
+---
+
+### 🔍 2. YOLOv8 객체 인식 (Segmentation) 노드 실행
 
 ```bash
-ros2 launch yolo_bringup yolov8.launch.py
+ros2 launch yolo_bringup yolov11n_seg.launch.py
 ```
 
-#### 결과 확인
+**설명**: 'YOLOv11n_seg` 모델을 사용해 객체 검증과 함께 **segmentation mask** 정보를 출력합니다.  
+카메라 이미지로부터 인식된 객체 정보를 `/yolo/detections` 통크로 퍼블리시합니다.
+
+**결과 확인**:
 
 ```bash
 ros2 topic echo /yolo/detections
 ```
 
-### 🎯 3. ArUco 마커 인식 노드 실행
+---
 
-```bash
-ros2 launch ros2_aruco aruco_recognition.launch.py
-```
-
-#### 결과 확인
-
-```bash
-ros2 topic echo /aruco_markers     # ID 및 pose 정보
-ros2 topic echo /aruco_poses       # geometry_msgs/PoseArray
-```
-
-### ⌨️ 4. Keyboard Teleoperation (teleop\_twist\_keyboard)
-
-**설명**: 키보드 입력을 받아 `cmd_vel` 토픽으로 `Twist` 메시지를 퍼블리시합니다.
-**설치**:
-
-```bash
-sudo apt install ros-humble-teleop-twist-keyboard
-```
-
-**사용 방법**:
-
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-**참고**: 터미널에서 실행되며, 키보드 입력으로 로봇을 제어할 수 있습니다.
-**공식 문서**: [teleop\_twist\_keyboard Documentation](https://docs.ros.org/en/humble/api/teleop_twist_keyboard/html/index.html)
-
-### 🔄 5. 이미지 변환 노드 실행
-https://github.com/user-attachments/assets/fd7acc59-0c3f-4e90-a0bd-18b65e0399d4
+### 🖼️ 3. 이미지 변환 노드 실행 
 
 ```bash
 ros2 launch image_fusion image_fusion_launch.py
 ```
 
+**설명**: YOLO 결과와 실제 이미지를 fusion. `/fused_image` topic 시각화된 이미지를 퍼블리시합니다.
+
+**결과 확인**:
+
+```bash
+ros2 topic echo /fused_image
+```
+
 ---
 
-## 🖼️ 시뮬레이션 예시
+### 🎯 4. ResNet18 E2E 모델 실행
 
-### ArUco 마커 인식 + YOLO 객체 탐지 (RViz)
+#### 📦 학습 (Training)
 
-![Image](https://github.com/user-attachments/assets/21e76fc8-d993-4095-b92b-6d99304471ad)
+```bash
+ros2 launch resnet_control train.launch.py
+```
+
+**설명**: YOLO 인식 결과를 바탕으로 ResNet18 모델을 학습해 주회 명령(`cmd_vel`)을 예측하도록 합니다.  
+학습된 모델은 `.pth` 형태로 저장되며, 추후 inference에서 자동 로드됩니다.
+
+> 학습은 로컬이 아닌 **Kaggle Cloud GPU 환경**에서 수행하며, 학습 로그 및 결과는 공유 폴더(`models/`)에 저장됩니다.
+
+#### ⚙️ 추론 (Inference)
+
+```bash
+ros2 launch resnet_control inference.launch.py
+```
+
+**설명**: 가장 최강에 저장된 모델을 보내여, 실시간 입력 이미지에 대해 제어 명령을 생성합니다.
+
+> 📌 현재 추론 결과에서 **좌우 방향 제어가 반대로 나오는 문제**가 있어, 원인 발견 및 수정 중입니다.
 
 ---
 
-### Gazebo 환경
+### ⌨️ 5. 키보드 텔레오퍼리언션 (teleop twist keyboard)
 
-![Image](https://github.com/user-attachments/assets/65836d64-998b-4a2f-bf1a-d633871e58f5)
+```bash
+sudo apt install ros-humble-teleop-twist-keyboard
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**설명**: 키보드 방향키를 이용해 직접 TurtleBot3를 조작하며, 학습 데이터 수집 또는 제어 비교 시험 등에 활용할 수 있습니다.
 
 ---
 
 ## 🎥 시연 영상
 
-[https://github.com/user-attachments/assets/1cb8c2a7-1c54-4de1-b77a-f901b61126b3](https://github.com/user-attachments/assets/1cb8c2a7-1c54-4de1-b77a-f901b61126b3)
+[📹 시연 영상 보러가기](https://github.com/user-attachments/assets/1cb8c2a7-1c54-4de1-b77a-f901b61126b3)
 
 ---
 
 ## 📌 참고 사항
 
-* YOLOv8은 기본적으로 GPU 환경에서 최적 동작하지만, CPU 환경에서도 실행은 가능함
-* ArUco 마커의 `pose` 인식을 위해선 카메라 센서에서 `/camera_info`가 정확히 발행되어야 함
-* Gazebo용 카메라 센서는 `<sensor type="camera">`로 설정되어야 RViz에서 왜곡 없는 시야 확보 가능
+- YOLOv8은 GPU에서 최적 성능을 밟지만, CPU 환경에서도 실행 가능
+- 학습 모델은 `install/resnet_control/share/resnet_control/model/`가이드에 저장됨
+- 추론 시 가장 최신 `.pth` 모델을 자동 선택 로드
+- Gazebo의 카메라 센서는 `<sensor type="camera">`형식으로 구성되어야 하며, `/camera_info` 통크 발행이 필요
 
 ---
 
 ## 🧑‍💻 Maintainer
 
-* **김준석**
-* ✉️ [bob4587@naver.com](mailto:bob4587@naver.com)
-* GitHub: [junsuk123](https://github.com/junsuk123)
+- **김준석**  
+- ✉️ [bob4587@naver.com](mailto:bob4587@naver.com)  
+- GitHub: [junsuk123](https://github.com/junsuk123)

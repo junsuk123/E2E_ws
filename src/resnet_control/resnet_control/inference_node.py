@@ -17,9 +17,13 @@ class InferenceNode(Node):
         # CV bridge
         self.bridge = CvBridge()
 
-        # 1) 모델 파일 검색 (패키지 share/model)
-        share_dir = get_package_share_directory('resnet_control')
-        model_dir = os.path.join(share_dir, 'model')
+        # 1) 모델 파일 검색 (패키지 src/models)
+        ws_root          = os.getcwd()
+        model_dir = os.path.join(ws_root, 'src', 'resnet_control', 'models')
+        # pkg_root   = os.path.dirname(os.path.dirname(__file__))
+        # model_dir = os.path.join(pkg_root, 'models')
+        # share_dir = get_package_share_directory('resnet_control')
+        # model_dir = os.path.join(share_dir, 'model')
         # .pth 파일 리스트
         candidates = sorted(f for f in os.listdir(model_dir) if f.endswith('.pth'))
         if not candidates:
@@ -77,8 +81,8 @@ class InferenceNode(Node):
         # d) Twist 메시지에 매핑
         t = Twist()
         # out[1] → 선속도, out[0] → 조향각
-        t.linear.x  = float(out[1])
-        t.angular.z = float(out[0])
+        t.linear.x  = (-1.0)*float(out[1])
+        t.angular.z = (-1.0)*float(out[0])
 
         # e) 퍼블리시
         self.pub.publish(t)

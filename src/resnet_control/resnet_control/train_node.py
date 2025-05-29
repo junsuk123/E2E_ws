@@ -52,9 +52,9 @@ class TrainNode(Node):
         default_data_dir = os.path.join(data_base, subdirs[-1]) if subdirs else data_base
         self.data_dir = self.declare_parameter('data_dir', default_data_dir).value
 
-        # 2) 모델 저장 경로: 패키지 share/resnet_control/model/<timestamp>.pth
-        rc_share = get_package_share_directory('resnet_control')
-        model_base = os.path.join(rc_share, 'model')
+        # 2) 모델 저장 경로: 패키지 src/resnet_control/models/<timestamp>.pth
+        pkg_root   = os.path.dirname(os.path.dirname(__file__))
+        model_base = os.path.join(pkg_root, 'models')
         os.makedirs(model_base, exist_ok=True)
         now_str = datetime.now().strftime('%Y%m%d_%H%M%S')
         default_model_path = os.path.join(model_base, f'resnet_{now_str}.pth')
