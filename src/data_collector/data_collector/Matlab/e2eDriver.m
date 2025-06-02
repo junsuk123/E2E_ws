@@ -202,3 +202,4 @@ disp("모든 pkill/daemon 명령이 완료되었습니다.");
 clear odomSub cmdSub node
 disp("inferenceAndPlot 스크립트가 완전히 종료되었습니다.");
 
+close all;

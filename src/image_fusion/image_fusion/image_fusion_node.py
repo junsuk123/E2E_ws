@@ -21,12 +21,15 @@ class ImageFusionNode(Node):
         super().__init__('image_fusion_node')
         self.bridge     = CvBridge()
         self.odom       = None
-        self.detections = []  # 최신 DetectionArray
+        self.detections = []
 
-        # 퍼블리셔
+        self.linear_velocity = 0.0
+        self.angular_velocity = 0.0
+        self.last_odom_time = None
+        self.dt = 0.0  # 이동 시간 간격
+
         self.pub = self.create_publisher(Image, '/fused_image', 10)
 
-        # 구독자
         self.create_subscription(Odometry,
                                  '/odom',
                                  self.odom_cb,
@@ -36,24 +39,26 @@ class ImageFusionNode(Node):
                                  self.detections_cb,
                                  10)
 
-        # 타이머 (10Hz)
         rate = self.declare_parameter('update_rate', 10.0).value
         self.create_timer(1.0 / rate, self.timer_cb)
 
     def odom_cb(self, msg: Odometry):
         self.odom = msg
+        self.linear_velocity = msg.twist.twist.linear.x
+        self.angular_velocity = msg.twist.twist.angular.z
+
+        current_time = self.get_clock().now()
+        if self.last_odom_time is not None:
+            self.dt = (current_time - self.last_odom_time).nanoseconds / 1e9
+        self.last_odom_time = current_time
 
     def detections_cb(self, msg: DetectionArray):
-        # DetectionArray 메시지 전체 저장
         self.detections = msg.detections
 
     def timer_cb(self):
-        # 1) 빈 캔버스 생성 (H=240, W=320)
         H, W = 240, 320
         img = np.zeros((H, W, 3), dtype=np.uint8)
 
-        # 2) 각 detection 처리
-        #    mask는 원본 영상 크기 (width=640, height=480) 기준
         scale_x = W / float(self.detections[0].mask.width) if self.detections else 1.0
         scale_y = H / float(self.detections[0].mask.height) if self.detections else 1.0
 
@@ -62,9 +67,7 @@ class ImageFusionNode(Node):
                 continue
             cls = det.class_name.lower()
 
-            # --- passageway: mask data polygon 채우기 (파랑) ---
             if cls == 'passageway' and det.mask.data:
-                # det.mask.data: List[Point] (x,y) in 원본 이미지 픽셀 좌표
                 pts = np.array([
                     [int(pt.x * scale_x), int(pt.y * scale_y)]
                     for pt in det.mask.data
@@ -72,42 +75,41 @@ class ImageFusionNode(Node):
                 cv2.fillPoly(img, [pts], (255, 0, 0))
                 continue
 
-            # bounding box 좌표 계산 (center+size → x0,y0와 x1,y1)
             cx = det.bbox.center.position.x * scale_x
             cy = det.bbox.center.position.y * scale_y
-            w  = det.bbox.size.x  * scale_x
-            h  = det.bbox.size.y  * scale_y
+            w  = det.bbox.size.x * scale_x
+            h  = det.bbox.size.y * scale_y
             x0 = int(max(0, cx - w/2))
             y0 = int(max(0, cy - h/2))
             x1 = int(min(W, cx + w/2))
             y1 = int(min(H, cy + h/2))
 
-            # --- person: 초록 박스 ---
             if cls == 'person':
-                cv2.rectangle(img, (x0, y0), (x1, y1),
-                              (0, 255, 0), 2)
-
-            # --- red pillar: 빨강 박스 ---
+                cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
             elif cls == 'red pillar':
-                cv2.rectangle(img, (x0, y0), (x1, y1),
-                              (0, 0, 255), 2)
+                cv2.rectangle(img, (x0, y0), (x1, y1), (0, 0, 255), 2)
 
-            # 그 외 클래스는 무시
-
-        # 3) 차량 자세 화살표 (보라)
+        # 차량 방향 화살표 + yaw 각도 텍스트 + 속도 텍스트
         if self.odom:
-            # 로컬 삼각형 좌표
-            pts = np.array([[0, -30], [-15, 10], [15, 10]], np.float32)
-            q   = self.odom.pose.pose.orientation
-            yaw = -quaternion_to_yaw(q.x, q.y, q.z, q.w)
-            R   = np.array([[ math.cos(yaw), -math.sin(yaw)],
-                            [ math.sin(yaw),  math.cos(yaw)]], np.float32)
-            rot = (pts @ R.T).astype(np.int32)
-            base = np.array([W//2, H-40], np.int32)
-            tri = (rot + base).reshape(-1,1,2)
-            cv2.fillPoly(img, [tri], (255, 0, 255))
+            q = self.odom.pose.pose.orientation
+            yaw = quaternion_to_yaw(q.x, q.y, q.z, q.w)+ math.pi / 2  # yaw 보정
 
-        # 4) 퍼블리시
+            # 차량 방향 화살표
+            start_pt = (W // 2, H - 40)
+            end_pt = (
+                int(start_pt[0] + 30 * math.cos(yaw)),
+                int(start_pt[1] - 30 * math.sin(yaw))
+            )
+            cv2.arrowedLine(img, start_pt, end_pt, (255, 0, 255), 2)
+
+            # Yaw, 속도, 이동시간 텍스트 출력
+            cv2.putText(img, f"Yaw: {int(np.degrees(yaw))} deg", (10, 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(img, f"Vel: {self.linear_velocity:.2f} m/s", (10, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(img, f"dt: {self.dt:.2f} s", (10, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+
         out = self.bridge.cv2_to_imgmsg(img, encoding='bgr8')
         out.header.stamp = self.get_clock().now().to_msg()
         self.pub.publish(out)
