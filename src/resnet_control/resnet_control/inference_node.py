@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
 from torchvision.transforms import Compose, ToPILImage, Resize, ToTensor
-from torchvision.models import resnet18
+from torchvision.models import resnet50, ResNet50_Weights
 from ament_index_python.packages import get_package_share_directory
 
 class InferenceNode(Node):
@@ -17,9 +17,14 @@ class InferenceNode(Node):
         # CV bridge
         self.bridge = CvBridge()
 
-        # 1) 모델 파일 검색 (패키지 src/models)
-        ws_root          = os.getcwd()
-        model_dir = os.path.join(ws_root, 'src', 'resnet_control', 'models')
+        # 1) 모델 파일 검색 (절대 경로 → ~/erp_ws/src/resnet_control/models)
+        #    자신의 워크스페이스 이름(예: e2e_ws, erp_ws)에 맞춰 수정하세요.
+        model_dir = os.path.join(
+            os.path.expanduser('~/e2e_ws'),
+            'src',
+            'resnet_control',
+            'models'
+        )
         # pkg_root   = os.path.dirname(os.path.dirname(__file__))
         # model_dir = os.path.join(pkg_root, 'models')
         # share_dir = get_package_share_directory('resnet_control')
@@ -43,7 +48,7 @@ class InferenceNode(Node):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # 클래스 수를 실제 모델에 맞게 설정하세요 (예: 2)
         num_classes = 2
-        self.model = resnet18(weights=None, num_classes=num_classes).to(self.device)
+        self.model = resnet50(weights=None, num_classes=num_classes).to(self.device)
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         self.model.eval()
         self.get_logger().info(f"Loaded model: {model_path}")
@@ -81,8 +86,8 @@ class InferenceNode(Node):
         # d) Twist 메시지에 매핑
         t = Twist()
         # out[1] → 선속도, out[0] → 조향각
-        t.linear.x  = (-1.0)*float(out[1])
-        t.angular.z = (-1.0)*float(out[0])
+        t.linear.x  = float(out[1])
+        t.angular.z = float(out[0])
 
         # e) 퍼블리시
         self.pub.publish(t)
