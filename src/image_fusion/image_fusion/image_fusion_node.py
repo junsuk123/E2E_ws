@@ -7,7 +7,6 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
 from yolo_msgs.msg import DetectionArray
-from geometry_msgs.msg import Point
 from cv_bridge import CvBridge
 
 def quaternion_to_yaw(qx, qy, qz, qw):
@@ -25,8 +24,6 @@ class ImageFusionNode(Node):
 
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
-        self.last_odom_time = None
-        self.dt = 0.0  # 이동 시간 간격
 
         self.pub = self.create_publisher(Image, '/fused_image', 10)
 
@@ -46,11 +43,6 @@ class ImageFusionNode(Node):
         self.odom = msg
         self.linear_velocity = msg.twist.twist.linear.x
         self.angular_velocity = msg.twist.twist.angular.z
-
-        current_time = self.get_clock().now()
-        if self.last_odom_time is not None:
-            self.dt = (current_time - self.last_odom_time).nanoseconds / 1e9
-        self.last_odom_time = current_time
 
     def detections_cb(self, msg: DetectionArray):
         self.detections = msg.detections
@@ -89,26 +81,18 @@ class ImageFusionNode(Node):
             elif cls == 'red pillar':
                 cv2.rectangle(img, (x0, y0), (x1, y1), (0, 0, 255), 2)
 
-        # 차량 방향 화살표 + yaw 각도 텍스트 + 속도 텍스트
+        # 차량 방향 화살표: 방향은 yaw, 길이는 linear_velocity에 비례
         if self.odom:
             q = self.odom.pose.pose.orientation
-            yaw = quaternion_to_yaw(q.x, q.y, q.z, q.w)+ math.pi / 2  # yaw 보정
+            yaw = quaternion_to_yaw(q.x, q.y, q.z, q.w) + math.pi / 2
 
-            # 차량 방향 화살표
+            arrow_length = int(max(30, min(80, abs(self.linear_velocity) * 50)))  # 속도에 따라 길이 조정 (30~80픽셀)
             start_pt = (W // 2, H - 40)
             end_pt = (
-                int(start_pt[0] + 30 * math.cos(yaw)),
-                int(start_pt[1] - 30 * math.sin(yaw))
+                int(start_pt[0] + arrow_length * math.cos(yaw)),
+                int(start_pt[1] - arrow_length * math.sin(yaw))
             )
-            cv2.arrowedLine(img, start_pt, end_pt, (255, 0, 255), 2)
-
-            # Yaw, 속도, 이동시간 텍스트 출력
-            cv2.putText(img, f"Yaw: {int(np.degrees(yaw))} deg", (10, 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(img, f"Vel: {self.linear_velocity:.2f} m/s", (10, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(img, f"dt: {self.dt:.2f} s", (10, 60),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+            cv2.arrowedLine(img, start_pt, end_pt, (255, 0, 255), 2, tipLength=0.3)
 
         out = self.bridge.cv2_to_imgmsg(img, encoding='bgr8')
         out.header.stamp = self.get_clock().now().to_msg()
