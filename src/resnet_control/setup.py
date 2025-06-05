@@ -19,6 +19,7 @@ setup(
         # models 폴더 (여기에 .pt 파일을 위치시키세요)
         (os.path.join('share', package_name, 'models'),
          glob(os.path.join('models', '*'))),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,

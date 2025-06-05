@@ -29,7 +29,7 @@ ros2Env = [ ...
 ];
 
 %% 2. waypoints 디렉토리에서 모든 파일 목록 불러오기
-folderName    = "waypoints";
+folderName    = "waypoints/release";
 filePattern   = fullfile(folderName, "waypoints_*.mat");
 allFiles      = dir(filePattern);
 if isempty(allFiles)
@@ -94,6 +94,16 @@ for fileIdx = 1:numel(allFiles)
             error("Image Fusion 런치 실패:\n%s", out3);
         end
         pause(5);
+        %% 2. Rviz 시뮬레이션 런치 (20초 대기)
+        disp("1) Rviz...");
+        cmd7 = sprintf( ...
+            'bash -i -c "%s && rviz2 &"', ...
+            ros2Env);
+        [status7, out7] = system(cmd7);
+        if status7 ~= 0
+            error("Rviz 런치 실패:\n%s", out7);
+        end
+        pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
 
         %% 3-5. ④ Data Collector 노드 런치 (5초 대기)
         disp("4) Data Collector 노드 런치...");
@@ -194,7 +204,8 @@ for fileIdx = 1:numel(allFiles)
             'pkill -9 -f image_fusion', ...
             'pkill -9 -f data_collector', ...    % inference_node(ResNet) 강제 종료
             'pkill -9 -f robot_state_pub', ...
-            'killall -9 gzserver gzclient gazebo', ...
+            'killall -9 gzserver gzclient gazebo', ...            
+            'killall -9 rviz2', ...
             'ros2 daemon stop', ...
             'ros2 daemon start', ...
         };

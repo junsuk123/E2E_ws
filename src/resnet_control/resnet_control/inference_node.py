@@ -2,22 +2,23 @@
 import os
 import rclpy
 import torch
+import torch.nn as nn
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
 from torchvision.transforms import Compose, ToPILImage, Resize, ToTensor
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import mobilenet_v2  # ResNet 대신 MobileNetV2 사용
 from ament_index_python.packages import get_package_share_directory
 
 class InferenceNode(Node):
     def __init__(self):
-        super().__init__('resnet_inference')
+        super().__init__('mobilenet_inference')
 
         # CV bridge
         self.bridge = CvBridge()
 
-        # 1) 모델 파일 검색 (절대 경로 → ~/erp_ws/src/resnet_control/models)
+        # 1) 모델 파일 검색 (절대 경로 → ~/e2e_ws/src/resnet_control/models)
         #    자신의 워크스페이스 이름(예: e2e_ws, erp_ws)에 맞춰 수정하세요.
         model_dir = os.path.join(
             os.path.expanduser('~/e2e_ws'),
@@ -25,10 +26,6 @@ class InferenceNode(Node):
             'resnet_control',
             'models'
         )
-        # pkg_root   = os.path.dirname(os.path.dirname(__file__))
-        # model_dir = os.path.join(pkg_root, 'models')
-        # share_dir = get_package_share_directory('resnet_control')
-        # model_dir = os.path.join(share_dir, 'model')
         # .pth 파일 리스트
         candidates = sorted(f for f in os.listdir(model_dir) if f.endswith('.pth'))
         if not candidates:
@@ -46,18 +43,27 @@ class InferenceNode(Node):
 
         # 3) 장치 선택 & 모델 로드
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # 클래스 수를 실제 모델에 맞게 설정하세요 (예: 2)
-        num_classes = 2
-        self.model = resnet50(weights=None, num_classes=num_classes).to(self.device)
+
+        # MobileNetV2 정의 (output: [steer, vel] → num_classes=2)
+        base_model = mobilenet_v2(weights=None)  # pretrained=False와 동일
+        # 분류기 부분을 새로 정의
+        in_features = base_model.classifier[1].in_features  # 마지막 Linear 입력 채널 수
+        base_model.classifier = nn.Sequential(
+            nn.Dropout(p=0.2),
+            nn.Linear(in_features, 2)  # 출력: [steer, vel]
+        )
+        self.model = base_model.to(self.device)
+
+        # 학습된 .pth 체크포인트 로드
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         self.model.eval()
-        self.get_logger().info(f"Loaded model: {model_path}")
+        self.get_logger().info(f"Loaded MobileNetV2 model: {model_path}")
 
         # 4) Transform 정의
         #    ToPILImage 으로 numpy.ndarray → PIL.Image 로 변환
         self.tf = Compose([
             ToPILImage(),            # numpy → PIL
-            Resize((240, 320)),      # height, width
+            Resize((240, 320)),      # height, width (원본 ResNet 코드와 동일)
             ToTensor(),              # PIL → tensor, [0,1]
         ])
 
@@ -69,7 +75,7 @@ class InferenceNode(Node):
             10
         )
         # 6) 발행 (/cmd_vel)
-        self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.pub = self.create_publisher(Twist, '/cmd_vel', 30)
 
     def cb_image(self, msg: Image):
         # a) ROS Image → OpenCV (numpy.ndarray, BGR)
@@ -96,7 +102,7 @@ class InferenceNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = InferenceNode()
-    # 모델 로드 실패 시 node 존재 여부로 체크
+    # 모델 로드 실패 시 node에 model 속성이 없음 → rclpy.shutdown() 호출됨
     if hasattr(node, 'model'):
         try:
             rclpy.spin(node)
