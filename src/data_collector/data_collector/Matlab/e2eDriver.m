@@ -61,16 +61,27 @@ if status3 ~= 0
     error("Image Fusion 런치 실패:\n%s", out3);
 end
 pause(5);
+%% 2. Rviz 시뮬레이션 런치 (20초 대기)
+disp("4) Rviz...");
+cmd7 = sprintf( ...
+    'bash -i -c "%s && rviz2 &"', ...
+    ros2Env);
+[status7, out7] = system(cmd7);
+if status7 ~= 0
+    error("Rviz 런치 실패:\n%s", out7);
+end
+pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
+
 %% 2) resnet_control inference 노드 런치 (5초 대기)
-disp("1) resnet_control inference 노드 런치...");
+disp("5) resnet_control inference 노드 런치...");
 cmd4 = sprintf( ...
-    'bash -i -c "%s && ros2 launch resnet_control inference.launch.py &"', ...
+    'bash -i -c "%s && ros2 launch e2e_control inference.launch.py &"', ...
     ros2Env);
 [status4, out4] = system(cmd4);
 if status4 ~= 0
     error("resnet_control inference 런치 실패:\n%s", out4);
 end
-pause(5);
+pause(1);
 
 
 %% 5) waypoints 최신 파일 자동 로드 및 Figure 준비
@@ -134,7 +145,8 @@ rate = robotics.Rate(10);
 % Figure 창이 닫힐 때 루프 종료를 위해 콜백 설정
 isFigOpen = true;
 addlistener(fig, 'ObjectBeingDestroyed', @(~,~) assignin('base','isFigOpen', false));
-
+goal          = waypoints(end, :);
+goalThreshold = 0.5;
 while isFigOpen
     % 1) Odometry 메시지 읽기
     odomMsg = odomSub.LatestMessage;
@@ -143,14 +155,25 @@ while isFigOpen
         posY = odomMsg.pose.pose.position.y;
         % 로봇 위치를 빨간 점으로 업데이트
         set(hRobot, "XData", posX, "YData", posY);
-    end
 
-    % 2) (옵션) cmd_vel 메시지를 확인하고 출력하려면:
-    %    cmdMsg = cmdSub.LatestMessage;
-    %    if ~isempty(cmdMsg)
-    %        fprintf("cmd_vel -> Linear: %.2f, Angular: %.2f\n", ...
-    %            cmdMsg.linear.x, cmdMsg.angular.z);
-    %    end
+        % → 목표 지점 거의 도달했을 때 멈추는 로직 추가
+        distToGoal = norm([posX, posY] - goal);      % 현재 위치와 goal 간 거리
+        if distToGoal < goalThreshold
+            disp("목표 지점에 거의 도달했습니다. inference node를 종료합니다.");
+            % inference 노드 강제 종료 (pkill 사용)
+            system(sprintf('bash -lc "%s; pkill -9 -f inference_node"', ros2Env));
+
+            % (선택) 정지 명령 보내기
+            stopPub = ros2publisher(node, "/cmd_vel", "geometry_msgs/Twist");
+            stopMsg = ros2message(stopPub);
+            stopMsg.Linear.X  = 0.0;
+            stopMsg.Angular.Z = 0.0;
+            send(stopPub, stopMsg);
+
+            
+            break;  % 루프 탈출
+        end
+    end
 
     drawnow limitrate;
     waitfor(rate);
@@ -179,6 +202,7 @@ killCmds = { ...
     'pkill -9 -f inference_node', ...
     'pkill -9 -f gzserver', ...
     'pkill -9 -f gzclient', ...
+    'killall -9 rviz2', ...
     'ros2 daemon stop', ...
     'ros2 daemon start' ...
 };

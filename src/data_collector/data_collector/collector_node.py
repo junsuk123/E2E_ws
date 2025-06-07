@@ -21,7 +21,7 @@ class CollectorNode(Node):
 
         # 1) 데이터를 저장할 워크스페이스 src 디렉토리 내 dataset 폴더 경로
         home_ws = os.path.expanduser('~/e2e_ws')
-        data_base = os.path.join(home_ws, 'src', 'resnet_control', 'dataset')
+        data_base = os.path.join(home_ws, 'src', 'e2e_control', 'dataset')
 
         # 2) 날짜·시간 기반 서브폴더 이름 생성
         now_str = datetime.now().strftime('%Y%m%d_%H%M%S')

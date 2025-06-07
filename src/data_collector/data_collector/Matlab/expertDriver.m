@@ -37,7 +37,7 @@ if isempty(allFiles)
 end
 
 %% 3. 각 waypoint 파일별로 20회 반복 수행
-numRepeats = 20;
+numRepeats = 1;
 
 for fileIdx = 1:numel(allFiles)
     latestFileName = allFiles(fileIdx).name;
@@ -106,6 +106,16 @@ for fileIdx = 1:numel(allFiles)
         pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
 
         %% 3-5. ④ Data Collector 노드 런치 (5초 대기)
+        % disp("5) img Data Collector 노드 런치...");
+        % cmd9 = sprintf( ...
+        %     'bash -i -c "%s && ros2 launch data_collector image_collector.launch.py &"', ...
+        %     ros2Env);
+        % [status9, out9] = system(cmd9);
+        % if status9 ~= 0
+        %     error("Data Collector 런치 실패:\n%s", out9);
+        % end
+        % pause(2);
+        %% 3-5. ④ Data Collector 노드 런치 (5초 대기)
         disp("4) Data Collector 노드 런치...");
         cmd4 = sprintf( ...
             'bash -i -c "%s && ros2 launch data_collector data_collector.launch.py &"', ...
@@ -114,7 +124,7 @@ for fileIdx = 1:numel(allFiles)
         if status4 ~= 0
             error("Data Collector 런치 실패:\n%s", out4);
         end
-        pause(5);
+        pause(2);
 
         %% 3-6. Pure Pursuit 수행
         if exist("node", "var"), clear node; end
@@ -203,6 +213,7 @@ for fileIdx = 1:numel(allFiles)
             'pkill -9 -f tracking_node', ...
             'pkill -9 -f image_fusion', ...
             'pkill -9 -f data_collector', ...    % inference_node(ResNet) 강제 종료
+            'pkill -9 -f image_collector', ...    % inference_node(ResNet) 강제 종료
             'pkill -9 -f robot_state_pub', ...
             'killall -9 gzserver gzclient gazebo', ...            
             'killall -9 rviz2', ...

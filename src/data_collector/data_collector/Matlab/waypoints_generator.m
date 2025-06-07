@@ -38,16 +38,16 @@ if st3 ~= 0
 end
 pause(5);
 
-%% 2. TurtleBot3 Gazebo 시뮬레이션 런치 (20초 대기)
-disp("1) Rviz...");
-cmd2 = sprintf( ...
-  'bash -i -c "%s && rviz2 &"', ...
-  ros2Env);
-[status2, out2] = system(cmd2);
-if status2 ~= 0
-    error("Rviz 런치 실패:\n%s", out2);
-end
-pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
+% %% 2. TurtleBot3 Gazebo 시뮬레이션 런치 (20초 대기)
+% disp("1) Rviz...");
+% cmd2 = sprintf( ...
+%   'bash -i -c "%s && rviz2 &"', ...
+%   ros2Env);
+% [status2, out2] = system(cmd2);
+% if status2 ~= 0
+%     error("Rviz 런치 실패:\n%s", out2);
+% end
+% pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
 
 %% 2. '/cmd_vel' 토픽이 생성될 때까지 대기
 % 메시지 타입: geometry_msgs/Twist
