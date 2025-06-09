@@ -3,7 +3,7 @@
 %
 % 설명:
 %  - waypoints 디렉토리에 있는 모든 waypoint 파일에 대해,
-%    각 파일마다 20회 반복(trial)하며,
+%    각 파일마다 10회 반복(trial)하며,
 %    매 반복마다 백그라운드 ROS2 노드를 전부 새로 띄우고,
 %    Pure Pursuit를 수행한 뒤 강제 종료합니다.
 %  
@@ -14,6 +14,9 @@
 %  - DesiredLinearVelocity ∈ [0.2, 0.5]
 %  - MaxAngularVelocity    ∈ [0.2, 0.7]
 %  - LookaheadDistance      ∈ [0.2, 0.4]
+% 스폰 위치 랜덤 범위
+%  - x_pose ∈ [0.0, 2.0]
+%  - y_pose ∈ [0.0, -1.2]
 %% ========================================================================
 clc; clear; close all;
 
@@ -36,8 +39,8 @@ if isempty(allFiles)
     error("waypoints 폴더에 'waypoints_*.mat' 파일이 없습니다.");
 end
 
-%% 3. 각 waypoint 파일별로 20회 반복 수행
-numRepeats = 1;
+%% 3. 각 waypoint 파일별로 numRepeats회 반복 수행
+numRepeats = 15;
 
 for fileIdx = 1:numel(allFiles)
     latestFileName = allFiles(fileIdx).name;
@@ -50,23 +53,26 @@ for fileIdx = 1:numel(allFiles)
     end
     waypoints = data.waypoints;  % Nx2 array [x y]
     
-    % ----------------- 이 안에서 20회 반복 -----------------
     for trial = 1:numRepeats
         fprintf("\n--- Trial %d / %d (파일: %s) 시작 ---\n", trial, numRepeats, latestFileName);
         
-        %% 3-1. 랜덤 Pure Pursuit 파라미터 생성
+        %% 3-1. 랜덤 Pure Pursuit 파라미터 생성 및 스폰 위치 랜덤화
         rng("shuffle");
-        randLinVel    = 0.1 + (0.3 - 0.1)*rand();   % [0.2, 0.5]
-        randAngVel    = 0.3 + (0.5 - 0.1)*rand();   % [0.2, 0.7]
-        randLookahead = 0.15 + (0.25 - 0.1)*rand();   % [0.2, 0.4]
+        randLinVel    = 0.2 + (0.5 - 0.2)*rand();    % [0.2, 0.5]
+        randAngVel    = 0.2 + (0.7 - 0.2)*rand();    % [0.2, 0.7]
+        randLookahead = 0.2 + (0.4 - 0.2)*rand();    % [0.2, 0.4]
         fprintf(" → [랜덤 파라미터] LinVel=%.3f, AngVel=%.3f, Lookahead=%.3f\n", ...
                 randLinVel, randAngVel, randLookahead);
+
+        spawnX = 2.0 * rand();      % x_pose ∈ [0.0, 2.0]
+        spawnY = -1.2 * rand();     % y_pose ∈ [0.0, -1.2]
+        fprintf(" → [랜덤 스폰 위치] x_pose=%.3f, y_pose=%.3f\n", spawnX, spawnY);
 
         %% 3-2. ① Gazebo 시뮬레이션 띄우기 (7초 대기)
         disp("1) TurtleBot3 Gazebo 시뮬레이션 런치...");
         cmd1 = sprintf( ...
-          'bash -i -c "%s && ros2 launch turtlebot3_gazebo turtlebot3_AICenter.launch.py &"', ...
-          ros2Env);
+          'bash -i -c "%s && ros2 launch turtlebot3_gazebo turtlebot3_AICenter.launch.py x_pose:=%0.3f y_pose:=%0.3f &"', ...
+          ros2Env, spawnX, spawnY);
         [st1, out1] = system(cmd1);
         if st1 ~= 0
             error("Gazebo 런치 실패:\n%s", out1);
@@ -94,8 +100,9 @@ for fileIdx = 1:numel(allFiles)
             error("Image Fusion 런치 실패:\n%s", out3);
         end
         pause(5);
-        %% 2. Rviz 시뮬레이션 런치 (20초 대기)
-        disp("1) Rviz...");
+
+        %% 3-5. ④ Rviz 실행 (5초 대기)
+        disp("4) Rviz 런치...");
         cmd7 = sprintf( ...
             'bash -i -c "%s && rviz2 &"', ...
             ros2Env);
@@ -103,20 +110,10 @@ for fileIdx = 1:numel(allFiles)
         if status7 ~= 0
             error("Rviz 런치 실패:\n%s", out7);
         end
-        pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
+        pause(5);
 
-        %% 3-5. ④ Data Collector 노드 런치 (5초 대기)
-        % disp("5) img Data Collector 노드 런치...");
-        % cmd9 = sprintf( ...
-        %     'bash -i -c "%s && ros2 launch data_collector image_collector.launch.py &"', ...
-        %     ros2Env);
-        % [status9, out9] = system(cmd9);
-        % if status9 ~= 0
-        %     error("Data Collector 런치 실패:\n%s", out9);
-        % end
-        % pause(2);
-        %% 3-5. ④ Data Collector 노드 런치 (5초 대기)
-        disp("4) Data Collector 노드 런치...");
+        %% 3-6. ⑤ Data Collector 노드 띄우기 (2초 대기)
+        disp("5) Data Collector 노드 런치...");
         cmd4 = sprintf( ...
             'bash -i -c "%s && ros2 launch data_collector data_collector.launch.py &"', ...
             ros2Env);
@@ -126,7 +123,7 @@ for fileIdx = 1:numel(allFiles)
         end
         pause(2);
 
-        %% 3-6. Pure Pursuit 수행
+        %% 3-7. Pure Pursuit 수행
         if exist("node", "var"), clear node; end
         node    = ros2node("expert_driver_node");
         odomSub = ros2subscriber(node, "/odom",    "nav_msgs/Odometry");
@@ -202,18 +199,18 @@ for fileIdx = 1:numel(allFiles)
         pause(1);
         if isvalid(fig), close(fig); end
 
-        %% 3-7. 후처리: 구독/퍼블리셔 해제 및 노드 종료
+        %% 3-8. 후처리: 구독/퍼블리셔 해제 및 노드 종료
         clear odomSub cmdPub node pp;
         disp(sprintf("Trial %d 종료: expert_driver 노드 해제 완료", trial));
 
-        %% 3-8. 백그라운드 노드 & 프로세스 강제 종료
+        %% 3-9. 백그라운드 노드 & 프로세스 강제 종료
         disp("백그라운드 노드 정리 시작...");
         killCmds = { ...
             'pkill -9 -f yolo', ...
             'pkill -9 -f tracking_node', ...
             'pkill -9 -f image_fusion', ...
-            'pkill -9 -f data_collector', ...    % inference_node(ResNet) 강제 종료
-            'pkill -9 -f image_collector', ...    % inference_node(ResNet) 강제 종료
+            'pkill -9 -f data_collector', ...
+            'pkill -9 -f image_collector', ...
             'pkill -9 -f robot_state_pub', ...
             'killall -9 gzserver gzclient gazebo', ...            
             'killall -9 rviz2', ...

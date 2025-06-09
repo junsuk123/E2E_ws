@@ -17,7 +17,7 @@ def generate_launch_description():
     )
     pretrained_model_arg = DeclareLaunchArgument(
         'pretrained_model',
-        default_value=os.path.join(home_ws, 'src', 'e2e_control', 'models', 'model.pth'),
+        default_value=os.path.join(home_ws, 'src', 'e2e_control', 'models', 'MobileNetV2_20250608_123311.pth'),
         description='Path to a pretrained .pth checkpoint (relative to models/ if empty)'
     )
     model_save_dir_arg = DeclareLaunchArgument(
@@ -32,7 +32,7 @@ def generate_launch_description():
     )
     batch_size_arg = DeclareLaunchArgument(
         'batch_size',
-        default_value='32',
+        default_value='8',
         description='Batch size for training'
     )
     learning_rate_arg = DeclareLaunchArgument(
