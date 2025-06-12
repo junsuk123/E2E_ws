@@ -25,18 +25,18 @@ class ImageFusionNode(Node):
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
 
-        self.pub = self.create_publisher(Image, '/fused_image', 10)
+        self.pub = self.create_publisher(Image, '/fused_image', 30)
 
         self.create_subscription(Odometry,
                                  '/odom',
                                  self.odom_cb,
-                                 10)
+                                 30)
         self.create_subscription(DetectionArray,
                                  '/yolo/tracking',
                                  self.detections_cb,
-                                 10)
+                                 30)
 
-        rate = self.declare_parameter('update_rate', 10.0).value
+        rate = self.declare_parameter('update_rate', 30.0).value
         self.create_timer(1.0 / rate, self.timer_cb)
 
     def odom_cb(self, msg: Odometry):

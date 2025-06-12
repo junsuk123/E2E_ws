@@ -60,7 +60,7 @@ class TrackingNode(LifecycleNode):
         )
 
         self.tracker = self.create_tracker(tracker_name)
-        self._pub = self.create_publisher(DetectionArray, "tracking", 10)
+        self._pub = self.create_publisher(DetectionArray, "tracking", 30)
 
         super().on_configure(state)
         self.get_logger().info(f"[{self.get_name()}] Configured")
@@ -82,11 +82,11 @@ class TrackingNode(LifecycleNode):
             self, Image, "image_raw", qos_profile=image_qos_profile
         )
         detections_sub = message_filters.Subscriber(
-            self, DetectionArray, "detections", qos_profile=10
+            self, DetectionArray, "detections", qos_profile=30
         )
 
         self._synchronizer = message_filters.ApproximateTimeSynchronizer(
-            (image_sub, detections_sub), 10, 0.5
+            (image_sub, detections_sub), 30, 0.5
         )
         self._synchronizer.registerCallback(self.detections_cb)
 
@@ -137,7 +137,7 @@ class TrackingNode(LifecycleNode):
             "bytetrack",
             "botsort",
         ], f"Only support 'bytetrack' and 'botsort' for now, but got '{cfg.tracker_type}'"
-        tracker = TRACKER_MAP[cfg.tracker_type](args=cfg, frame_rate=1)
+        tracker = TRACKER_MAP[cfg.tracker_type](args=cfg, frame_rate=30)
         return tracker
 
     def detections_cb(self, img_msg: Image, detections_msg: DetectionArray) -> None:

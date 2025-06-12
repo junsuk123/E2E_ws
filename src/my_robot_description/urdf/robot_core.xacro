@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<robot name="my_mobile" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<gazebo>
+  <plugin name="diff_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <ros>
+      <namespace>/</namespace>
+    </ros>
+    <left_joint>left_wheel_joint</left_joint>
+    <right_joint>right_wheel_joint</right_joint>
+    <wheel_separation>0.6</wheel_separation>
+    <wheel_radius>0.1</wheel_radius>
+    <wheel_diameter>0.2</wheel_diameter>
+    <publish_odom>true</publish_odom>
+    <odom_topic>odom</odom_topic>
+    <robot_base_frame>base_link</robot_base_frame>
+  </plugin>
+</gazebo>
+
+  <xacro:property name="wheel_separation" value="0.6"/>
+  <xacro:property name="wheel_radius" value="0.1"/>
+  <xacro:property name="wheel_diameter" value="0.2"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0.0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/sejongDel_body_origin45.dae" scale="0.00075 0.00075 0.00075"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 -0.0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/sejongDel_body_origin45.stl" scale="0.00075 0.00075 0.00075"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <link name="left_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="5 5 5"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="5 5 5"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin xyz="${0.28-wheel_radius} ${wheel_separation/2} 0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="right_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 -${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="5 5 5"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 -${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="5 5 5"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin xyz="${0.28-wheel_radius} -${wheel_separation/2} 0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="rear_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="2 2 2"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="2 2 2"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="rear_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_wheel"/>
+    <origin xyz="-${0.1+wheel_radius-0.15} 0 -0.1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="front_camera">  
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/front_camera.dae" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/front_camera.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="front_camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_camera"/>
+    <origin xyz="0.3 0 0.6" rpy="0 -${pi/4} 0"/>
+  </joint>
+  <gazebo reference="front_camera">
+    <sensor name="camera" type="camera">
+      <always_on>true</always_on>
+      <visualize>true</visualize>            <!-- Gazebo GUI 카메라 뷰어에 노출 -->
+      <update_rate>30</update_rate>          <!-- 원하는 프레임율로 설정 -->
+      <camera name="cam">
+        <horizontal_fov>1.089</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.01</near>
+          <far>50.0</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <remapping>image_raw:=image_raw</remapping>
+          <remapping>camera_info:=camera_info</remapping>
+        </ros>
+        <frameName>front_camera</frameName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <minDepth>0.01</minDepth>
+        <maxDepth>50.0</maxDepth>
+
+      </plugin>
+    </sensor>
+  </gazebo>
+
+
+</robot>

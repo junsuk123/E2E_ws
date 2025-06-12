@@ -122,10 +122,10 @@ class YoloNode(LifecycleNode):
             depth=1,
         )
 
-        self._pub = self.create_lifecycle_publisher(DetectionArray, "detections", 10)
+        self._pub = self.create_lifecycle_publisher(DetectionArray, "detections", 30)
         # segmentation mask publisher
         self._mask_pub = self.create_lifecycle_publisher(
-            SegImage, "segmentation_mask", 10
+            SegImage, "segmentation_mask", 30
         )
         self.cv_bridge = CvBridge()
 

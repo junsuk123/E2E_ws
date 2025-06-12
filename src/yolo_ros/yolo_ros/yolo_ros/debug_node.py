@@ -67,9 +67,9 @@ class DebugNode(LifecycleNode):
         )
 
         # pubs
-        self._dbg_pub = self.create_publisher(Image, "dbg_image", 10)
-        self._bb_markers_pub = self.create_publisher(MarkerArray, "dgb_bb_markers", 10)
-        self._kp_markers_pub = self.create_publisher(MarkerArray, "dgb_kp_markers", 10)
+        self._dbg_pub = self.create_publisher(Image, "dbg_image", 30)
+        self._bb_markers_pub = self.create_publisher(MarkerArray, "dgb_bb_markers", 30)
+        self._kp_markers_pub = self.create_publisher(MarkerArray, "dgb_kp_markers", 30)
 
         super().on_configure(state)
         self.get_logger().info(f"[{self.get_name()}] Configured")
@@ -84,11 +84,11 @@ class DebugNode(LifecycleNode):
             self, Image, "image_raw", qos_profile=self.image_qos_profile
         )
         self.detections_sub = message_filters.Subscriber(
-            self, DetectionArray, "detections", qos_profile=10
+            self, DetectionArray, "detections", qos_profile=30
         )
 
         self._synchronizer = message_filters.ApproximateTimeSynchronizer(
-            (self.image_sub, self.detections_sub), 10, 0.5
+            (self.image_sub, self.detections_sub), 30, 0.5
         )
         self._synchronizer.registerCallback(self.detections_cb)
 
