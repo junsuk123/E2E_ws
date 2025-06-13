@@ -31,7 +31,7 @@ ros2Env = [ ...
 %% 2. TurtleBot3 Gazebo 시뮬레이션 런치 (20초 대기)
 disp("1) TurtleBot3 Gazebo 시뮬레이션 런치...");
 cmd1 = sprintf( ...
-  'bash -i -c "%s && source ~/.bashrc;ros2 launch my_robot_description gazebo.launch.py &"', ...
+  'bash -i -c "%s && source ~/.bashrc;ros2 launch my_robot_description core.launch.py &"', ...
   ros2Env);
 [status1, out1] = system(cmd1);
 if status1 ~= 0
@@ -145,7 +145,7 @@ rate = robotics.Rate(10);
 isFigOpen = true;
 addlistener(fig, 'ObjectBeingDestroyed', @(~,~) assignin('base','isFigOpen', false));
 goal          = waypoints(end, :);
-goalThreshold = 0.1;
+goalThreshold = 0.5;
 while isFigOpen
     % 1) Odometry 메시지 읽기
     odomMsg = odomSub.LatestMessage;
@@ -170,7 +170,7 @@ while isFigOpen
             send(stopPub, stopMsg);
 
             
-            break;  % 루프 탈출
+            % break;  % 루프 탈출
         end
     end
 

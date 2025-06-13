@@ -24,13 +24,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 -0.0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/visual/sejongDel_body_origin45.dae" scale="0.00075 0.00075 0.00075"/>
+        <mesh filename="package://my_robot_description/meshes/visual/sejongDel_body_origin45.dae" scale="0.00075 0.0005 0.00075"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 -0.0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/collision/sejongDel_body_origin45.stl" scale="0.00075 0.00075 0.00075"/>
+        <mesh filename="package://my_robot_description/meshes/collision/sejongDel_body_origin45.stl" scale="0.00075 0.0005 0.00075"/>
       </geometry>
     </collision>
 
@@ -64,7 +64,7 @@
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
-    <origin xyz="${0.28-wheel_radius} ${wheel_separation/2} 0.3" rpy="0 0 0"/>
+    <origin xyz="${0.28-wheel_radius} ${wheel_separation/2-0.1} 0.3" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -91,7 +91,7 @@
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel"/>
-    <origin xyz="${0.28-wheel_radius} -${wheel_separation/2} 0.3" rpy="0 0 0"/>
+    <origin xyz="${0.28-wheel_radius} -${wheel_separation/2-0.1} 0.3" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
