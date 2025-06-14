@@ -72,7 +72,7 @@ class InferenceNode(Node):
             Image,
             '/fused_image',
             self.cb_image,
-            10
+            30
         )
         # 6) 발행 (/cmd_vel)
         self.pub = self.create_publisher(Twist, '/cmd_vel', 30)

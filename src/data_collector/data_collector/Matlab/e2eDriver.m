@@ -145,7 +145,7 @@ rate = robotics.Rate(10);
 isFigOpen = true;
 addlistener(fig, 'ObjectBeingDestroyed', @(~,~) assignin('base','isFigOpen', false));
 goal          = waypoints(end, :);
-goalThreshold = 1.5;
+goalThreshold = 0.2;
 stopcnt=0;
 while isFigOpen
     % 1) Odometry 메시지 읽기

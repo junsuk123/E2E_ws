@@ -14,6 +14,7 @@
     <odom_topic>odom</odom_topic>
     <robot_base_frame>base_link</robot_base_frame>
   </plugin>
+  
 </gazebo>
 
   <xacro:property name="wheel_separation" value="0.6"/>
@@ -35,8 +36,8 @@
     </collision>
 
     <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <mass value="0.01"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
       <origin xyz="0 0 0"/>
     </inertial>
   </link>
@@ -64,7 +65,7 @@
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
-    <origin xyz="${0.28-wheel_radius} ${wheel_separation/2-0.1} 0.3" rpy="0 0 0"/>
+    <origin xyz="${0.28-wheel_radius} ${wheel_separation/2-0.05} 0.3" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -91,35 +92,65 @@
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel"/>
-    <origin xyz="${0.28-wheel_radius} -${wheel_separation/2-0.1} 0.3" rpy="0 0 0"/>
+    <origin xyz="${0.28-wheel_radius} -${wheel_separation/2-0.05} 0.3" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
-  <link name="rear_wheel">
+  <link name="left_rear_wheel">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="2 2 2"/>
+        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="5 5 5"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="2 2 2"/>
+        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="5 5 5"/>
       </geometry>
     </collision>
     <inertial>
-      <mass value="0.5"/>
+      <mass value="0.25"/>
       <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
       <origin xyz="0 0 0"/>
     </inertial>
   </link>
 
-  <joint name="rear_wheel_joint" type="continuous">
+  <joint name="left_rear_wheel_joint" type="continuous">
     <parent link="base_link"/>
-    <child link="rear_wheel"/>
-    <origin xyz="-${0.1+wheel_radius-0.15} 0 -0.1" rpy="0 0 0"/>
+    <child link="left_rear_wheel"/>
+    <origin xyz="-${0.28-wheel_radius+0.05} ${wheel_separation/2-0.05} -0.1" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
+    <dynamics friction="0.0" damping="0.0"/>
+  </joint>
+
+
+  <link name="right_rear_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/visual/wheel.dae" scale="5 5 5"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/meshes/collision/wheel.stl" scale="5 5 5"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.25"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_rear_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_rear_wheel"/>
+    <origin xyz="-${0.28-wheel_radius+0.05} -${wheel_separation/2-0.05} -0.1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics friction="0.0" damping="0.0"/>
   </joint>
 
   <link name="front_camera">  

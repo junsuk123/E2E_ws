@@ -15,8 +15,8 @@ def generate_launch_description():
         default_value=os.path.join(pkg_share, 'worlds', 'AI_Center3.world'),
         description='Gazebo world file to load'
     )
-    declare_x_arg = DeclareLaunchArgument('x_pose', default_value='6.5',  description='Spawn X')
-    declare_y_arg = DeclareLaunchArgument('y_pose', default_value='0.4', description='Spawn Y')
+    declare_x_arg = DeclareLaunchArgument('x_pose', default_value='0.0',  description='Spawn X')
+    declare_y_arg = DeclareLaunchArgument('y_pose', default_value='0.2', description='Spawn Y')
     declare_z_arg = DeclareLaunchArgument('z_pose', default_value='0.0',  description='Spawn Z')
 
     # 2) LaunchConfiguration 객체
