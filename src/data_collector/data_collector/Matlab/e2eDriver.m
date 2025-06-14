@@ -145,7 +145,8 @@ rate = robotics.Rate(10);
 isFigOpen = true;
 addlistener(fig, 'ObjectBeingDestroyed', @(~,~) assignin('base','isFigOpen', false));
 goal          = waypoints(end, :);
-goalThreshold = 0.5;
+goalThreshold = 1.5;
+stopcnt=0;
 while isFigOpen
     % 1) Odometry 메시지 읽기
     odomMsg = odomSub.LatestMessage;
@@ -163,14 +164,19 @@ while isFigOpen
             system(sprintf('bash -lc "%s; pkill -9 -f inference_node"', ros2Env));
 
             % (선택) 정지 명령 보내기
-            stopPub = ros2publisher(node, "/cmd_vel", "geometry_msgs/Twist");
-            stopMsg = ros2message(stopPub);
-            stopMsg.Linear.X  = 0.0;
-            stopMsg.Angular.Z = 0.0;
-            send(stopPub, stopMsg);
+            while(stopcnt<7)
+                stopPub = ros2publisher(node, "/cmd_vel", "geometry_msgs/Twist");
+                stopMsg = ros2message(stopPub);
+                stopMsg.Linear.X  = 0.0;
+                stopMsg.Angular.Z = 0.0;
+                send(stopPub, stopMsg);
+                pause(0.5)
+                stopcnt=stopcnt+1;
+            end
+
 
             
-            % break;  % 루프 탈출
+            break;  % 루프 탈출
         end
     end
 
