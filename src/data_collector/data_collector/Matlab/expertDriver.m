@@ -26,7 +26,6 @@ ros2Env = [ ...
     "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu; " + ...
     "unset ROS_DOMAIN_ID; " + ...
     "export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:/opt/ros/humble/lib; " + ...
-    "export TURTLEBOT3_MODEL=burger_cam; " + ...
     "source /opt/ros/humble/setup.bash; " + ...
     "source ~/e2e_ws/install/setup.bash" ...
 ];
@@ -58,31 +57,32 @@ for fileIdx = 1:numel(allFiles)
         
         %% 3-1. 랜덤 Pure Pursuit 파라미터 생성 및 스폰 위치 랜덤화
         rng("shuffle");
-        randLinVel    = 0.2 + (0.5 - 0.2)*rand();    % [0.2, 0.5]
-        randAngVel    = 0.2 + (0.7 - 0.2)*rand();    % [0.2, 0.7]
+        randLinVel    = 0.1 + (0.2 - 0.1)*rand();    % [0.2, 0.5]
+        randAngVel    = 0.3 + (0.7 - 0.3)*rand();    % [0.2, 0.7]
         randLookahead = 0.2 + (0.4 - 0.2)*rand();    % [0.2, 0.4]
         fprintf(" → [랜덤 파라미터] LinVel=%.3f, AngVel=%.3f, Lookahead=%.3f\n", ...
                 randLinVel, randAngVel, randLookahead);
 
-        spawnX = 2.0 * rand();      % x_pose ∈ [0.0, 2.0]
-        spawnY = -1.2 * rand();     % y_pose ∈ [0.0, -1.2]
+        spawnX = waypoints(1,1);      % x_pose ∈ [0.0, 2.0]
+        spawnY = waypoints(1,2);     % y_pose ∈ [0.0, -1.2]
+        spawnZ=0.0;
         fprintf(" → [랜덤 스폰 위치] x_pose=%.3f, y_pose=%.3f\n", spawnX, spawnY);
 
-        %% 3-2. ① Gazebo 시뮬레이션 띄우기 (7초 대기)
+        %% 2. TurtleBot3 Gazebo 시뮬레이션 런치 (20초 대기)
         disp("1) TurtleBot3 Gazebo 시뮬레이션 런치...");
         cmd1 = sprintf( ...
-          'bash -i -c "%s && ros2 launch turtlebot3_gazebo turtlebot3_AICenter.launch.py x_pose:=%0.3f y_pose:=%0.3f &"', ...
-          ros2Env, spawnX, spawnY);
-        [st1, out1] = system(cmd1);
-        if st1 ~= 0
-            error("Gazebo 런치 실패:\n%s", out1);
+            'bash -i -c "%s && source ~/.bashrc; ros2 launch my_robot_description core.launch.py x_pose:=%0.3f y_pose:=%0.3f z_pose:=%0.3f &"', ...
+            ros2Env, spawnX, spawnY, spawnZ);
+        [status1, out1] = system(cmd1);
+        if status1 ~= 0
+            error("TurtleBot3 Gazebo 런치 실패:\n%s", out1);
         end
-        pause(7);
+        pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
 
         %% 3-3. ② YOLOv11n_seg 노드 띄우기 (5초 대기)
         disp("2) YOLOv11n_seg 노드 런치...");
         cmd2 = sprintf( ...
-          'bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ...
+            'bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ...
           ros2Env);
         [st2, out2] = system(cmd2);
         if st2 ~= 0
@@ -136,7 +136,7 @@ for fileIdx = 1:numel(allFiles)
         pp.LookaheadDistance     = randLookahead;
 
         goal          = waypoints(end, :);
-        goalThreshold = 0.1;
+        goalThreshold = 0.2;
 
         fig = figure("Name", sprintf("Pure Pursuit Trial %d (%s)", trial, latestFileName), ...
                      "NumberTitle", "off");
