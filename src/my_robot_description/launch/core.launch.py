@@ -16,7 +16,7 @@ def generate_launch_description():
         description='Gazebo world file to load'
     )
     declare_x_arg = DeclareLaunchArgument('x_pose', default_value='0.0',  description='Spawn X')
-    declare_y_arg = DeclareLaunchArgument('y_pose', default_value='0.2', description='Spawn Y')
+    declare_y_arg = DeclareLaunchArgument('y_pose', default_value='-1.5', description='Spawn Y')
     declare_z_arg = DeclareLaunchArgument('z_pose', default_value='0.0',  description='Spawn Z')
 
     # 2) LaunchConfiguration 객체
@@ -39,7 +39,7 @@ def generate_launch_description():
         # Gazebo 실행
         ExecuteProcess(
             cmd=[
-                'gazebo', '--verbose',
+                'gzserver', '--verbose',
                 '-s', 'libgazebo_ros_factory.so',
                 world
             ],

@@ -1,25 +1,8 @@
-%% ========================================================================
-%  inferenceAndPlot.m
-%
-% 이 스크립트는 아래 3개의 ROS 2 런치 파일을 순차적으로 실행한 뒤,
-% resnet_control의 inference 노드가 발행하는 '/cmd_vel'을 구독하여
-% 로봇의 현재 위치(odometry)를 실시간으로 Plot합니다.
-% 동시에 waypoints 폴더의 최신 파일을 배경에 표시합니다.
-% (waypoints 경로는 로봇이 따라야 할 목표 경로를 미리 보여줍니다.)
-% 마지막으로 사용자가 Figure 창을 닫거나 강제로 종료하면,
-% 백그라운드에서 실행 중인 모든 관련 노드를 정리합니다.
-%
-% 실행 순서:
-% 1) ROS 2 환경 변수 세팅
-% 2) resnet_control inference 노드 런치 (5초 대기)
-% 3) YOLOv11n_seg 노드 런치 (5초 대기)
-% 4) Image Fusion 노드 런치 (5초 대기)
-% 5) waypoints 최신 파일 로드 및 시각화
-% 6) ROS 2 구독자(odometry) 생성 및 실시간 로봇 위치 Plot
-% 7) Figure 창 종료 시 모든 노드 종료
-%% ========================================================================
-
-%% 1. ROS 2 환경 설정 (Humble + e2e_ws 워크스페이스)
+%% inferenceAndPlot_withBatchTests.m
+% 20회 랜덤 스폰 테스트 자동화, 결과 시각화 및 경로 플로팅
+% Ubuntu 22.04 + ROS2 Humble 환경 기준
+clc;close all; clear;
+%% 0. 백그라운드 노드 강제 종료
 ros2Env = [ ...
     "unset LD_LIBRARY_PATH; " + ...
     "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu; " + ...
@@ -28,203 +11,206 @@ ros2Env = [ ...
     "source /opt/ros/humble/setup.bash; " + ...
     "source ~/e2e_ws/install/setup.bash" ...
 ];
-%% 2. TurtleBot3 Gazebo 시뮬레이션 런치 (20초 대기)
-disp("1) TurtleBot3 Gazebo 시뮬레이션 런치...");
-cmd1 = sprintf( ...
-  'bash -i -c "%s && source ~/.bashrc;ros2 launch my_robot_description core.launch.py &"', ...
-  ros2Env);
-[status1, out1] = system(cmd1);
-if status1 ~= 0
-    error("TurtleBot3 Gazebo 런치 실패:\n%s", out1);
-end
-pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
 
-%% 3) YOLOv11n_seg 노드 런치 (5초 대기)
-disp("2) YOLOv11n_seg 노드 런치...");
-cmd2 = sprintf( ...
-    'bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ...
-    ros2Env);
-[status2, out2] = system(cmd2);
-if status2 ~= 0
-    error("YOLOv11n_seg 런치 실패:\n%s", out2);
-end
-pause(5);
-
-%% 4) Image Fusion 노드 런치 (5초 대기)
-disp("3) Image Fusion 노드 런치...");
-cmd3 = sprintf( ...
-    'bash -i -c "%s && ros2 launch image_fusion image_fusion.launch.py &"', ...
-    ros2Env);
-[status3, out3] = system(cmd3);
-if status3 ~= 0
-    error("Image Fusion 런치 실패:\n%s", out3);
-end
-pause(5);
-%% 2. Rviz 시뮬레이션 런치 (20초 대기)
-disp("4) Rviz...");
-cmd7 = sprintf( ...
-    'bash -i -c "%s && rviz2 &"', ...
-    ros2Env);
-[status7, out7] = system(cmd7);
-if status7 ~= 0
-    error("Rviz 런치 실패:\n%s", out7);
-end
-pause(5);  % Gazebo가 spawn_entity 서비스를 올릴 시간 확보
-
-%% 2) resnet_control inference 노드 런치 (5초 대기)
-disp("5) resnet_control inference 노드 런치...");
-cmd4 = sprintf( ...
-    'bash -i -c "%s && ros2 launch e2e_control inference.launch.py &"', ...
-    ros2Env);
-[status4, out4] = system(cmd4);
-if status4 ~= 0
-    error("resnet_control inference 런치 실패:\n%s", out4);
-end
-pause(1);
-
-
-%% 5) waypoints 최신 파일 자동 로드 및 Figure 준비
-folderName  = "waypoints";
-filePattern = fullfile(folderName, "waypoints_*.mat");
-files       = dir(filePattern);
-
-if isempty(files)
-    error("waypoints 폴더에 'waypoints_*.mat' 파일이 없습니다.");
-end
-
-[~, idxLatest]   = max([files.datenum]);
-latestFileName   = files(idxLatest).name;
-fullFilePath     = fullfile(folderName, latestFileName);
-fprintf("가장 최신 waypoints 파일: %s\n", latestFileName);
-
-data = load(fullFilePath);
-if ~isfield(data, "waypoints")
-    error("선택된 파일에 'waypoints' 변수가 없습니다.");
-end
-waypoints = data.waypoints;  % N×2 배열 [x  y]
-
-% Figure 및 Plot 초기화
-fig = figure("Name","Inference: Robot 실시간 위치 추적","NumberTitle","off");
-ax  = axes(fig);
-hold(ax, "on");
-grid(ax, "on");
-xlabel(ax, "X [m]");
-ylabel(ax, "Y [m]");
-title(ax, "로봇 위치 및 Waypoints (Inference 제어)");
-
-% waypoints 경로를 파란 실선으로 그림
-hPathStatic = plot(ax, waypoints(:,1), waypoints(:,2), "b-", "LineWidth", 1);
-
-% 로봇 현재 위치를 빨간 점으로 표시할 핸들 (초기값 NaN)
-hRobot = plot(ax, NaN, NaN, "ro", "MarkerSize", 6, "MarkerFaceColor", "r");
-
-% axis 범위 설정: waypoints 전체 + 여유 마진
-margin = 0.2;
-xmin   = min(waypoints(:,1)) - margin;
-xmax   = max(waypoints(:,1)) + margin;
-ymin   = min(waypoints(:,2)) - margin;
-ymax   = max(waypoints(:,2)) + margin;
-axis(ax, [xmin, xmax, ymin, ymax]);
-
-%% 6) ROS 2 노드 생성 및 퍼블리셔/서브스크라이버 생성
-% expert_driver 처럼 새로운 노드를 만들기만 하면 좋습니다.
-if exist("node","var"), clear node; end
-node   = ros2node("inference_plot_node");
-
-% '/odom'을 구독하여 로봇의 현재 위치를 얻음
-odomSub = ros2subscriber(node, "/odom", "nav_msgs/Odometry");
-
-% (옵션) '/cmd_vel'을 구독하여 Inference가 보낸 속도 명령을 확인하고 싶다면:
-cmdSub  = ros2subscriber(node, "/cmd_vel", "geometry_msgs/Twist");
-
-%% 7) 실시간 추적 루프 (10 Hz)
-disp("Inference 제어에 따른 실시간 위치 추적 시작...");
-rate = robotics.Rate(10);
-
-% Figure 창이 닫힐 때 루프 종료를 위해 콜백 설정
-isFigOpen = true;
-addlistener(fig, 'ObjectBeingDestroyed', @(~,~) assignin('base','isFigOpen', false));
-goal          = waypoints(end, :);
-goalThreshold = 0.2;
-stopcnt=0;
-while isFigOpen
-    % 1) Odometry 메시지 읽기
-    odomMsg = odomSub.LatestMessage;
-    if ~isempty(odomMsg)
-        posX = odomMsg.pose.pose.position.x;
-        posY = odomMsg.pose.pose.position.y;
-        % 로봇 위치를 빨간 점으로 업데이트
-        set(hRobot, "XData", posX, "YData", posY);
-
-        % → 목표 지점 거의 도달했을 때 멈추는 로직 추가
-        distToGoal = norm([posX, posY] - goal);      % 현재 위치와 goal 간 거리
-        if distToGoal < goalThreshold
-            disp("목표 지점에 거의 도달했습니다. inference node를 종료합니다.");
-            % inference 노드 강제 종료 (pkill 사용)
-            system(sprintf('bash -lc "%s; pkill -9 -f inference_node"', ros2Env));
-
-            % (선택) 정지 명령 보내기
-            while(stopcnt<7)
-                stopPub = ros2publisher(node, "/cmd_vel", "geometry_msgs/Twist");
-                stopMsg = ros2message(stopPub);
-                stopMsg.Linear.X  = 0.0;
-                stopMsg.Angular.Z = 0.0;
-                send(stopPub, stopMsg);
-                pause(0.5)
-                stopcnt=stopcnt+1;
-            end
-
-
-            
-            break;  % 루프 탈출
-        end
-    end
-
-    drawnow limitrate;
-    waitfor(rate);
-end
-
-%% ===== MATLAB 스크립트의 맨 마지막에 추가 =====
-disp("Figure가 닫혔습니다. 백그라운드 노드를 정리합니다…");
-
-% ① ROS2 환경 변수 및 setup 스크립트 (문자열로 미리 만들어 두기)
-ros2Env = [ ...
-    'unset LD_LIBRARY_PATH; ' ...
-    'export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu; ' ...
-    'unset ROS_DOMAIN_ID; ' ...
-    'export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:/opt/ros/humble/lib; ' ...
-    'source /opt/ros/humble/setup.bash; ' ...
-    'source ~/e2e_ws/install/setup.bash' ...
-];
-
-% ② 개별 pkill/daemon 명령을 cell 배열로 정의
+disp("백그라운드 노드 정리 시작...");
 killCmds = { ...
     'pkill -9 -f ros', ...
     'pkill -9 -f yolo', ...
     'pkill -9 -f tracking_node', ...
-    'pkill -9 -f image_fusion_no', ...
+    'pkill -9 -f image_fusion', ...
+    'pkill -9 -f data_collector', ...
     'pkill -9 -f robot_state_pub', ...
-    'pkill -9 -f inference_node', ...
-    'pkill -9 -f gzserver', ...
-    'pkill -9 -f gzclient', ...
+    'killall -9 gz gazebo', ...
     'killall -9 rviz2', ...
     'ros2 daemon stop', ...
     'ros2 daemon start' ...
 };
-
-% ③ 하나씩 순차 실행 (실패해도 계속 진행)
 for i = 1:numel(killCmds)
     cmd = sprintf('bash -lc "set +e; %s; %s"', ros2Env, killCmds{i});
-    [st, out] = system(cmd);
-    if st ~= 0
-        fprintf("명령 실패 [%s]:\n%s\n", killCmds{i}, out);
+    [statusKill, outKill] = system(cmd);
+    if statusKill ~= 0
+        fprintf("[경고] 명령 실패 [%s]:\n%s\n", killCmds{i}, outKill);
     end
 end
+disp("백그라운드 노드 정리 완료.");
 
-disp("모든 pkill/daemon 명령이 완료되었습니다.");
+%% 설정
+numTests     = 10;        % 총 테스트 횟수
+timeLimit    = 150;       % 각 시나리오별 시간 제한 (sec)
+successFlags = false(1, numTests);
+elapsedTimes = nan(1, numTests);
+paths        = cell(1, numTests);  % 각 테스트별 주행 경로 저장
+modelName = "MobileNetV2_20250616_013019_doing.pth";  % 또는 원하는 모델 파일명(0617 기준 가장 성능 좋음.)
+% modelName = "MobileNetV2_20250615_121253_doing.pth";  % 또는 원하는 모델 파일명 
+% modelName = "MobileNetV2_20250616_012232_bob.pth";  % 또는 원하는 모델 파일명
+% modelName = "MobileNetV2_20250615_014247_junsuk.pth";  % 또는 원하는 모델 파일명
+% modelName = "MobileNetV2_student_distilled.pth";  % 또는 원하는 모델 파일명
 
-% ④ MATLAB 변수 정리
-clear odomSub cmdSub node
-disp("inferenceAndPlot 스크립트가 완전히 종료되었습니다.");
+%% 2. Waypoints 로드 (테스트 전 공통)
+waypointFolder = "waypoints";
+pattern        = fullfile(waypointFolder, "waypoints_*.mat");
+files          = dir(pattern);
+if isempty(files)
+    error("Waypoints 파일을 찾을 수 없습니다: %s", pattern);
+end
+[~, idxLatest] = max([files.datenum]);
+data           = load(fullfile(waypointFolder, files(idxLatest).name));
+if ~isfield(data, "waypoints")
+    error("파일에 waypoints 변수가 없습니다: %s", files(idxLatest).name);
+end
+waypoints     = data.waypoints;          % N×2 [x y]
+goal          = [10.08, -0.099032];       % 목표 위치
+obs1          = [4.394416, 0.100351];       % 장애물1 위치
+obs2          = [7.241572, -1.188195];       % 장애물2 위치
+wall_left_start          = [0.0, 1.012151];       % 시작점 왼쪽벽  위치
+wall_right_start          = [0.0, -2.361800];       % 시작점 오른쪽벽  위치
+wall_left_end          = [21.179338, 1.012151];       % 시작점 왼쪽벽  위치
+wall_right_end          = [21.179338, -2.361800];       % 시작점 오른쪽벽  위치
+% 보간할 점 개수
+n = 100;
 
-close all;
+% 선형 보간 (linspace 이용)
+wall_left  = [ linspace(wall_left_start(1),  wall_left_end(1),  n).' , ...
+               linspace(wall_left_start(2),  wall_left_end(2),  n).' ];
+
+wall_right = [ linspace(wall_right_start(1), wall_right_end(1), n).' , ...
+               linspace(wall_right_start(2), wall_right_end(2), n).' ];
+
+goalThreshold = 0.8;                     % 목표 도달 임계 거리 [m]
+
+%% 테스트 루프
+for idx = 1:numTests
+    fprintf("\n=== Test %d / %d ===\n", idx, numTests);
+    
+    % 2-1) 랜덤 spawn 위치 생성 (x, z 고정)
+    spawnX = 0.0;
+    spawnY = -1.5 + (-1.0 + 1.5) * rand();  % uniform in [-1.5, 0.2]
+    spawnZ = 0.0;
+    fprintf("Spawn 위치: x=%.3f, y=%.3f, z=%.3f\n", spawnX, spawnY, spawnZ);
+    
+    % 2-2) Gazebo + Robot spawn
+    cmdGazebo = sprintf( ...
+        'bash -i -c "%s && humble;e2e;cd ~/e2e_ws; colcon build;source ~/.bashrc; ros2 launch my_robot_description core.launch.py x_pose:=%0.3f y_pose:=%0.3f z_pose:=%0.3f &"', ...
+        ros2Env, spawnX, spawnY, spawnZ);
+    if system(cmdGazebo) ~= 0
+        error("Gazebo 런치 실패 (Test %d)", idx);
+    end
+    pause(1);
+    
+    % 2-3) YOLOv11n_seg 노드 런치
+    cmdYolo = sprintf('bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ros2Env);
+    system(cmdYolo); pause(1);
+    
+    % 2-4) Image Fusion 노드 런치
+    cmdFusion = sprintf('bash -i -c "%s && ros2 launch image_fusion image_fusion.launch.py &"', ros2Env);
+    system(cmdFusion); pause(1);
+    
+    % 2-5) Rviz 런치
+    cmdRviz = sprintf('bash -i -c "%s && rviz2 &"', ros2Env);
+    system(cmdRviz); pause(1);
+    
+    % 2-6) Inference 노드 런치
+    cmdInf = sprintf( ...
+        'bash -i -c "%s && ros2 launch e2e_control inference.launch.py model_name:=%s &"', ...
+        ros2Env, modelName);
+    system(cmdInf); pause(3);
+    %%
+    % 3) ROS2 Subscriber 생성
+    node    = ros2node("inference_plot_node");
+    odomSub = ros2subscriber(node, "/odom", "nav_msgs/Odometry");
+
+    % 4) 테스트 시작: 시간 측정 및 경로 기록
+    path    = [];     % 이번 테스트 경로 초기화
+    tic;
+    reached = false;
+    while true
+        elapsed = toc;
+        if elapsed > timeLimit
+            fprintf("▶ Time limit 초과 (%.1f s)\n", elapsed);
+            break;
+        end
+        
+        msg = odomSub.LatestMessage;
+        if ~isempty(msg)
+            pos = [ msg.pose.pose.position.x, msg.pose.pose.position.y ];
+            path(end+1, :) = pos;  % 경로에 추가
+            norm(pos - goal)
+            if norm(pos - goal) < goalThreshold
+                fprintf("▶ 목표 도달: %.1f s\n", elapsed);
+                reached = true;
+                break;
+            end
+        end
+        
+        pause(0.0333);
+    end
+    
+    % 5) 결과 저장
+    elapsedTimes(idx) = min(toc, timeLimit);
+    successFlags(idx) = reached;
+    paths{idx}        = path;
+    
+    % 6) 백그라운드 노드 정리
+    killCmds = { ...
+        'pkill -9 -f ros2', ...
+        'pkill -9 -f yolo', ...
+        'pkill -9 -f image_fusion', ...
+        'killall -9 rviz2', ...
+        'pkill -9 -f inference', ...
+        'pkill -9 -f gzserver', ...
+        'pkill -9 -f gzclient', ...
+        'ros2 daemon stop', ...
+        'ros2 daemon start' ...
+    };
+    for k = 1:numel(killCmds)
+        system(sprintf('bash -lc "%s; %s"', ros2Env, killCmds{k}));
+    end
+    
+    pause(2);
+end
+
+%% 7. 결과 시각화: Bar Chart
+figure("Name","Batch Test Results","NumberTitle","off");
+b = bar(1:numTests, elapsedTimes, 'FaceColor','flat');
+for i = 1:numTests
+    if successFlags(i)
+        b.CData(i,:) = [0 0.7 0];  % 성공: 녹색
+    else
+        b.CData(i,:) = [0.8 0 0];  % 실패: 빨강
+    end
+end
+xlabel("Test Index");
+ylabel("Elapsed Time [s]");
+title(sprintf("20 Tests: %d Success / %d Fail", sum(successFlags), numTests));
+
+fprintf("\n=== 최종 결과 ===\n");
+fprintf("성공 횟수      : %d / %d\n", sum(successFlags), numTests);
+if any(successFlags)
+    fprintf("평균 소요 시간: %.1f s\n", mean(elapsedTimes(successFlags)));
+else
+    fprintf("모든 테스트 실패\n");
+end
+
+%% 8. 전체 경로 시각화
+figure("Name","All Trajectories","NumberTitle","off");
+hold on; grid on;
+colors = lines(numTests);
+for i = 1:numTests
+    path_i = paths{i};
+    if isempty(path_i)
+        warning('Test %d: 경로 데이터 없음, 스킵합니다.', i);
+        continue;
+    end
+    plot(path_i(:,1), path_i(:,2), '-', 'Color', colors(i,:), 'LineWidth', 1);
+end
+% plot(waypoints(:,1), waypoints(:,2), 'k--', 'LineWidth', 1.5);
+plot(goal(1), goal(2), 'r*', 'LineWidth', 1.5);
+plot(obs1(1), obs1(2), 'g*', 'LineWidth', 1.5);
+plot(obs2(1), obs2(2), 'g*', 'LineWidth', 1.5);
+plot(wall_left(:,1),  wall_left(:,2),  'b-', 'DisplayName','Left Wall');
+plot(wall_right(:,1), wall_right(:,2), 'b-', 'DisplayName','Right Wall');
+xlabel("X [m]"); ylabel("Y [m]");
+title("All Scenario Trajectories");
+legendEntries = arrayfun(@(i) sprintf('Test %d', i), 1:numTests, 'UniformOutput', false);
+legend([legendEntries, {'gaol'},{'obs1'},{'obs2'},{'Left Wall'},{'Right Wall'}], 'Location','bestoutside');
+
