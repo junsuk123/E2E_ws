@@ -17,7 +17,7 @@ endif()
 
 # ✅ 로컬 리소스 폴더들 설치
 install(
-  DIRECTORY launch urdf meshes rviz worlds environment_hooks
+  DIRECTORY launch urdf meshes worlds environment_hooks
   DESTINATION share/${PROJECT_NAME}
 )
 
