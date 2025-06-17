@@ -39,7 +39,7 @@ def generate_launch_description():
         # Gazebo 실행
         ExecuteProcess(
             cmd=[
-                'gzserver', '--verbose',
+                'gazebo', '--verbose',
                 '-s', 'libgazebo_ros_factory.so',
                 world
             ],

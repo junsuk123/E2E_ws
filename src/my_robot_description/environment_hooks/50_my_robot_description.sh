@@ -9,5 +9,5 @@ MY_MODEL_PATH="${AMENT_PREFIX_PATH}/share/my_robot_description/models"
 if [ -z "$GAZEBO_MODEL_PATH" ]; then
   export GAZEBO_MODEL_PATH="$MY_MODEL_PATH"
 else
-  export GAZEBO_MODEL_PATH="$GAZEBO_MODEL_PATH:$MY_MODEL_PATH"
+  export GAZEBO_MODEL_PATH="$GAZEBO_MODEL_PATH:${AMENT_CURRENT_PREFIX}/share/my_robot_description/models"
 fi
