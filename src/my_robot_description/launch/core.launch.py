@@ -1,77 +1,82 @@
+import os
+import xacro
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-import os
-import xacro
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('my_robot_description')
 
-    # 1) 인자 선언
-    declare_world_arg = DeclareLaunchArgument(
-        'world',
-        default_value=os.path.join(pkg_share, 'worlds', 'AI_Center3.world'),
-        description='Gazebo world file to load'
-    )
-    declare_x_arg = DeclareLaunchArgument('x_pose', default_value='0.0',  description='Spawn X')
-    declare_y_arg = DeclareLaunchArgument('y_pose', default_value='-1.5', description='Spawn Y')
-    declare_z_arg = DeclareLaunchArgument('z_pose', default_value='0.0',  description='Spawn Z')
+    # xacro → URDF
+    xacro_path = os.path.join(pkg_share, 'urdf', 'robot_core.xacro')
+    robot_desc_pkg = xacro.process_file(xacro_path).toxml()
 
-    # 2) LaunchConfiguration 객체
-    world  = LaunchConfiguration('world')
-    x_pose = LaunchConfiguration('x_pose')
-    y_pose = LaunchConfiguration('y_pose')
-    z_pose = LaunchConfiguration('z_pose')
-
-    # 3) xacro → URDF
-    xacro_file = os.path.join(pkg_share, 'urdf', 'robot_core.xacro')
-    robot_description_config = xacro.process_file(xacro_file).toxml()
-    urdf_xml = robot_description_config.replace(
-        'package://my_robot_description',
-        pkg_share
+    # Gazebo용으로 경로 치환
+    robot_desc_gazebo = robot_desc_pkg.replace(
+        'package://my_robot_description', pkg_share
     )
+
+    # Gazebo에 넘길 임시 URDF 저장
+    temp_urdf_path = os.path.join(pkg_share, 'temp_spawn_model.urdf')
+    with open(temp_urdf_path, 'w') as f:
+        f.write(robot_desc_gazebo)
+
+    # Gazebo world 파일 경로
+    world_path = os.path.join(pkg_share, 'worlds', 'AI_Center3.world')
+
     return LaunchDescription([
-        # 인자 등록
-        declare_world_arg,
-        declare_x_arg,
-        declare_y_arg,
-        declare_z_arg,
+        # Pose 인자
+        DeclareLaunchArgument('x_pose', default_value='0.0'),
+        DeclareLaunchArgument('y_pose', default_value='-1.5'),
+        DeclareLaunchArgument('z_pose', default_value='0.0'),
 
-        # Gazebo 실행
+        # Gazebo 실행 (world + plugin 포함)
         ExecuteProcess(
             cmd=[
                 'gazebo', '--verbose',
-                '-s', 'libgazebo_ros_factory.so',
-                world
+                world_path,
+                '-s', 'libgazebo_ros_factory.so'
             ],
             output='screen'
         ),
 
-        # robot_state_publisher (URDF 퍼블리시)
+        # RViz용 robot_state_publisher
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            parameters=[{
-                'use_sim_time': True,
-                'robot_description': urdf_xml
-            }]
+            parameters=[{'robot_description': robot_desc_pkg}]
         ),
 
-        # spawn_entity.py (한 번만)
+        # joint_state_publisher_gui
         Node(
-            package='gazebo_ros',
-            executable='spawn_entity.py',
-            arguments=[
-                '-topic',  'robot_description',
-                '-entity', 'my_mobile',
-                '-x',      x_pose,
-                '-y',      y_pose,
-                '-z',      z_pose
-            ],
+            package='joint_state_publisher_gui',
+            executable='joint_state_publisher_gui',
+            name='joint_state_publisher_gui',
             output='screen'
         ),
+
+        # RViz
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen'
+        ),
+
+        # spawn_entity.py 로 URDF 스폰 (Gazebo는 실제 경로만 인식함)
+        ExecuteProcess(
+            cmd=[
+                'ros2', 'run', 'gazebo_ros', 'spawn_entity.py',
+                '-entity', 'my_mobile',
+                '-file', temp_urdf_path,
+                '-x', LaunchConfiguration('x_pose'),
+                '-y', LaunchConfiguration('y_pose'),
+                '-z', LaunchConfiguration('z_pose')
+            ],
+            output='screen'
+        )
     ])

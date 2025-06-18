@@ -18,7 +18,7 @@
           <technique sid="common">
             <phong>
               <diffuse>
-                <color>0.12549 0.12549 0.12549 0.12549</color>
+                <color>0.9843 0.9529 0.8118 1</color>
               </diffuse>
             </phong>
           </technique>
@@ -29,7 +29,7 @@
           <technique sid="common">
             <phong>
               <diffuse>
-                <color>0 0 0 1</color>
+                <color>0.9843 0.9529 0.8118 1</color>
               </diffuse>
             </phong>
           </technique>

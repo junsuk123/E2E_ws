@@ -88,7 +88,14 @@ for idx = 1:numTests
     spawnY = -1.5 + (-1.0 + 1.5) * rand();  % uniform in [-1.5, 0.2]
     spawnZ = 0.0;
     fprintf("Spawn 위치: x=%.3f, y=%.3f, z=%.3f\n", spawnX, spawnY, spawnZ);
-    
+        
+    cmdCDDS = sprintf( ...
+        'bash -i -c "%s && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp &"', ...
+        ros2Env);
+    if system(cmdCDDS) ~= 0
+        error("CDDS 실패 (Test %d)", idx);
+    end
+    pause(1);
     % 2-2) Gazebo + Robot spawn
     cmdGazebo = sprintf( ...
         'bash -i -c "%s && humble;e2e;cd ~/e2e_ws; colcon build;source ~/.bashrc; ros2 launch my_robot_description core.launch.py x_pose:=%0.3f y_pose:=%0.3f z_pose:=%0.3f &"', ...
