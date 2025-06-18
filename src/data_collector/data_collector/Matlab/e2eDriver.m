@@ -88,7 +88,7 @@ for idx = 1:numTests
     spawnY = -1.5 + (-1.0 + 1.5) * rand();  % uniform in [-1.5, 0.2]
     spawnZ = 0.0;
     fprintf("Spawn 위치: x=%.3f, y=%.3f, z=%.3f\n", spawnX, spawnY, spawnZ);
-    
+
     cmdCDDS = sprintf( ...
         'bash -i -c "%s && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp &"', ...
         ros2Env);
