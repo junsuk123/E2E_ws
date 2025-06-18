@@ -28,7 +28,10 @@ def generate_launch_description():
     # 3) xacro → URDF
     xacro_file = os.path.join(pkg_share, 'urdf', 'robot_core.xacro')
     robot_description_config = xacro.process_file(xacro_file).toxml()
-
+    urdf_xml = robot_description_config.replace(
+        'package://my_robot_description',
+        pkg_share
+    )
     return LaunchDescription([
         # 인자 등록
         declare_world_arg,
@@ -54,7 +57,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'use_sim_time': True,
-                'robot_description': robot_description_config
+                'robot_description': urdf_xml
             }]
         ),
 
