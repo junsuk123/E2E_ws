@@ -11,7 +11,7 @@ def generate_launch_description():
     # ① model_path 인자 선언 (외부에서 override 가능)
     declare_model_arg = DeclareLaunchArgument(
         'model_name',
-        default_value='student_distilled.pth',
+        default_value='MobileNetV2_20250617_121056.pth',
         description='모델 파일 이름 (*.pth)'
     )
     return LaunchDescription([

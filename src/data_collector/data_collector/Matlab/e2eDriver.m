@@ -21,6 +21,7 @@ killCmds = { ...
     'pkill -9 -f image_fusion', ...
     'pkill -9 -f data_collector', ...
     'pkill -9 -f robot_state_pub', ...
+    'pkill -9 -f joint_state', ...
     'killall -9 gz gazebo', ...
     'killall -9 rviz2', ...
     'ros2 daemon stop', ...
@@ -41,8 +42,8 @@ timeLimit    = 150;       % 각 시나리오별 시간 제한 (sec)
 successFlags = false(1, numTests);
 elapsedTimes = nan(1, numTests);
 paths        = cell(1, numTests);  % 각 테스트별 주행 경로 저장
-modelName = "MobileNetV2_20250617_121056.pth";  % 또는 원하는 모델 파일명(0617 기준 가장 성능 좋음.)
-% modelName = "MobileNetV2_20250615_121253_doing.pth";  % 또는 원하는 모델 파일명 
+% modelName = "MobileNetV2_20250616_013019_doing.pth";  % 또는 원하는 모델 파일명(0617 기준 가장 성능 좋음.)
+modelName = "MobileNetV2_20250617_121056.pth";  % 또는 원하는 모델 파일명 
 % modelName = "MobileNetV2_20250616_012232_bob.pth";  % 또는 원하는 모델 파일명
 % modelName = "MobileNetV2_20250615_014247_junsuk.pth";  % 또는 원하는 모델 파일명
 % modelName = "MobileNetV2_student_distilled.pth";  % 또는 원하는 모델 파일명
@@ -68,7 +69,7 @@ wall_right_start          = [0.0, -2.361800];       % 시작점 오른쪽벽  �
 wall_left_end          = [21.179338, 1.012151];       % 시작점 왼쪽벽  위치
 wall_right_end          = [21.179338, -2.361800];       % 시작점 오른쪽벽  위치
 % 보간할 점 개수
-n = 100;
+n = 50;
 
 % 선형 보간 (linspace 이용)
 wall_left  = [ linspace(wall_left_start(1),  wall_left_end(1),  n).' , ...
@@ -85,7 +86,7 @@ for idx = 1:numTests
     
     % 2-1) 랜덤 spawn 위치 생성 (x, z 고정)
     spawnX = 0.0;
-    spawnY = -1.5 + (-1.0 + 1.5) * rand();  % uniform in [-1.5, 0.2]
+    spawnY = -1.5 + (0.5 + 1.5) * rand();  % uniform in [-1.5, 0.2]
     spawnZ = 0.0;
     fprintf("Spawn 위치: x=%.3f, y=%.3f, z=%.3f\n", spawnX, spawnY, spawnZ);
 
@@ -107,15 +108,11 @@ for idx = 1:numTests
     
     % 2-3) YOLOv11n_seg 노드 런치
     cmdYolo = sprintf('bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ros2Env);
-    system(cmdYolo); pause(1);
+    system(cmdYolo); pause(5);
     
     % 2-4) Image Fusion 노드 런치
     cmdFusion = sprintf('bash -i -c "%s && ros2 launch image_fusion image_fusion.launch.py &"', ros2Env);
     system(cmdFusion); pause(1);
-    
-    % 2-5) Rviz 런치
-    cmdRviz = sprintf('bash -i -c "%s && rviz2 &"', ros2Env);
-    system(cmdRviz); pause(1);
     
     % 2-6) Inference 노드 런치
     cmdInf = sprintf( ...
@@ -222,6 +219,43 @@ title("All Scenario Trajectories");
 legendEntries = arrayfun(@(i) sprintf('Test %d', i), 1:numTests, 'UniformOutput', false);
 legend([legendEntries, {'gaol'},{'obs1'},{'obs2'},{'Left Wall'},{'Right Wall'}], 'Location','bestoutside');
 
+%% 8-1. x축 차이로부터 도달률(%) 계산
+initialX   = 0.0;
+thresholdX = abs(goal(1) - initialX);  % 기준값: 0과 goal의 x좌표 차이
+reachRates = nan(1, numTests);
+
+for i = 1:numTests
+    if ~isempty(paths{i})
+        finalX      = paths{i}(end,1);
+        diffX       = abs(finalX - goal(1));
+        reachRates(i) = max(0, (thresholdX - diffX) / thresholdX) * 100;
+    else
+        reachRates(i) = 0;
+    end
+end
+avgReachRate = mean(reachRates, 'omitnan');
+
+%% 8-2. 스텝별 도달률(%) 산점도 with 컬러맵
+figure('Name','Reach Rate by Step','NumberTitle','off');
+scatter(1:numTests, reachRates, 100, reachRates, 'filled', ...
+        'MarkerEdgeColor','k', 'MarkerFaceAlpha',0.85);
+colormap(parula);
+cb = colorbar;
+cb.Label.String = '도달률 (%)';
+
+hold on;
+yline(avgReachRate, '--k', '평균 도달률', ...
+      'LabelHorizontalAlignment','left', ...
+      'LabelVerticalAlignment','bottom', ...
+      'LabelOrientation','horizontal', ...
+      'FontWeight','bold');
+hold off;
+
+grid on;
+xlabel('Test Index (Step)');
+ylabel('도달률 (%)');
+ylim([0 100]);
+title('테스트별 X축 기준 도달률 (%) 및 평균 도달률');
 %% 8-1. x축 차이로부터 도달률(%) 계산
 initialX   = 0.0;
 thresholdX = abs(goal(1) - initialX);  % 기준값: 0과 goal의 x좌표 차이
