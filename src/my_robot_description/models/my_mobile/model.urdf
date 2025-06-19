@@ -42,6 +42,59 @@
     </inertial>
   </link>
 
+  <link name="right_logo_bg">  
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/models/my_mobile/meshes/visual/sejongMark_background.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/models/my_mobile/meshes/collision/sejongMark_background.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_logo_bg_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_logo_bg"/>
+    <origin xyz="0 0 1.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="right_logo">  
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/models/my_mobile/meshes/visual/sejongMark.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://my_robot_description/models/my_mobile/meshes/collision/sejongMark.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <origin xyz="0 0 0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_logo_joint" type="fixed">
+    <parent link="right_logo_bg"/>
+    <child link="right_logo"/>
+
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
   <link name="left_wheel">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>

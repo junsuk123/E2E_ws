@@ -21,6 +21,7 @@ killCmds = { ...
     'pkill -9 -f image_fusion', ...
     'pkill -9 -f data_collector', ...
     'pkill -9 -f robot_state_pub', ...
+    'pkill -9 -f joint_state', ...
     'killall -9 gz gazebo', ...
     'killall -9 rviz2', ...
     'ros2 daemon stop', ...
@@ -36,7 +37,7 @@ end
 disp("백그라운드 노드 정리 완료.");
 
 %% 설정
-numTests     = 2;        % 총 테스트 횟수
+numTests     = 100;        % 총 테스트 횟수
 timeLimit    = 150;       % 각 시나리오별 시간 제한 (sec)
 successFlags = false(1, numTests);
 elapsedTimes = nan(1, numTests);
@@ -68,7 +69,7 @@ wall_right_start          = [0.0, -2.361800];       % 시작점 오른쪽벽  �
 wall_left_end          = [21.179338, 1.012151];       % 시작점 왼쪽벽  위치
 wall_right_end          = [21.179338, -2.361800];       % 시작점 오른쪽벽  위치
 % 보간할 점 개수
-n = 100;
+n = 50;
 
 % 선형 보간 (linspace 이용)
 wall_left  = [ linspace(wall_left_start(1),  wall_left_end(1),  n).' , ...
@@ -85,7 +86,7 @@ for idx = 1:numTests
     
     % 2-1) 랜덤 spawn 위치 생성 (x, z 고정)
     spawnX = 0.0;
-    spawnY = -1.5 + (-1.0 + 1.5) * rand();  % uniform in [-1.5, 0.2]
+    spawnY = -1.5 + (0.5 + 1.5) * rand();  % uniform in [-1.5, 0.2]
     spawnZ = 0.0;
     fprintf("Spawn 위치: x=%.3f, y=%.3f, z=%.3f\n", spawnX, spawnY, spawnZ);
 
@@ -107,7 +108,7 @@ for idx = 1:numTests
     
     % 2-3) YOLOv11n_seg 노드 런치
     cmdYolo = sprintf('bash -i -c "%s && ros2 launch yolo_ros yolov11n_seg.launch.py &"', ros2Env);
-    system(cmdYolo); pause(10);
+    system(cmdYolo); pause(5);
     
     % 2-4) Image Fusion 노드 런치
     cmdFusion = sprintf('bash -i -c "%s && ros2 launch image_fusion image_fusion.launch.py &"', ros2Env);

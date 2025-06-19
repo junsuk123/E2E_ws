@@ -35,7 +35,7 @@ def generate_launch_description():
         # Gazebo 실행 (world + plugin 포함)
         ExecuteProcess(
             cmd=[
-                'gzserver', '--verbose',
+                'gazebo', '--verbose',
                 world_path,
                 '-s', 'libgazebo_ros_factory.so'
             ],
